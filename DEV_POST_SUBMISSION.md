@@ -7,6 +7,8 @@ cover_image: https://raw.githubusercontent.com/yandri918/agrisensa_garden_studio
 
 > *"Design on your screen. Step outside with your tape measure. Touch the soil. Grow together."*
 
+![AgriSensa Garden Studio: Spatial Precision Garden Planner](https://raw.githubusercontent.com/yandri918/agrisensa_garden_studio/main/public/cover.png)
+
 This submission is built for the **Hacktoberfest Open-Source AI Challenge — Week 1: Touch Grass**.
 
 * **Live Demo (Production on Railway):** [https://agrisensa-garden-studio-production.up.railway.app](https://agrisensa-garden-studio-production.up.railway.app)
