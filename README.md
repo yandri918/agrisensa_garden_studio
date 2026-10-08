@@ -2,7 +2,9 @@
 
 > **Spatial 2D/3D Precision Garden Planner with Gemini AI & Agronomic Geometry Engine**  
 > Built for *Hacktoberfest Open-Source AI Challenge Week 1: Touch Grass*.  
-> **Tagline:** Design your garden. Step outside. Grow together.
+> **Tagline:** Design your garden. Step outside. Grow together.  
+> 
+> **Live Production:** [https://agrisensa-garden-studio-production.up.railway.app](https://agrisensa-garden-studio-production.up.railway.app)
 
 ---
 
