@@ -3,7 +3,6 @@ title: "AgriSensa Garden Studio - Spatial Precision Garden Planner with Open-Sou
 published: true
 tags: devchallenge, hacktoberfest, opensource, ai
 cover_image: https://raw.githubusercontent.com/yandri918/agrisensa_garden_studio/main/public/cover.png
-canonical_url: https://github.com/yandri918/agrisensa_garden_studio
 ---
 
 > *"Design on your screen. Step outside with your tape measure. Touch the soil. Grow together."*
