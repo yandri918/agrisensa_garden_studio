@@ -55,7 +55,7 @@ cp .env.example .env.local
 
 Inside `.env.local`:
 ```env
-NEXT_PUBLIC_GEMINI_API_KEY=your_gemini_api_key_here
+# Server-side key, kept secure from client bundles
 GEMINI_API_KEY=your_gemini_api_key_here
 ```
 *(Get your free API key at [Google AI Studio](https://aistudio.google.com/))*

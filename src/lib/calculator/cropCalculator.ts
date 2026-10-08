@@ -39,7 +39,9 @@ export interface GardenProductionMetrics {
   totalProductionAreaM2: number;
   totalPlantCapacity: number;
   totalYieldPerMonthKg: number;
-  totalEstimatedMonthlyRevenueIdr: number;
+  totalEstimatedMonthlyRevenueIdr: number; // Nilai Produksi Bruto
+  estimatedMonthlyOpexIdr: number; // Estimasi Biaya Operasional (benih, pupuk/nutrisi, air ~30%)
+  estimatedMonthlyNetProfitIdr: number; // Estimasi Margin Bersih Bulanan
   dailyWaterRequirementLiters: number;
   irrigation: IrrigationSummary;
   breakdown: CropYieldSummary[];
@@ -133,6 +135,8 @@ export function calculateGardenMetrics(objects: GardenObject[]): GardenProductio
   const totalPlantCapacity = breakdown.reduce((sum, item) => sum + item.plantCount, 0);
   const totalYieldPerMonthKg = Math.round(breakdown.reduce((sum, item) => sum + item.monthlyYieldKg, 0) * 10) / 10;
   const totalEstimatedMonthlyRevenueIdr = breakdown.reduce((sum, item) => sum + item.estimatedValueIdr, 0);
+  const estimatedMonthlyOpexIdr = Math.round(totalEstimatedMonthlyRevenueIdr * 0.30); // Estimasi 30% OPEX (benih, pupuk/nutrisi, listrik pompa)
+  const estimatedMonthlyNetProfitIdr = Math.max(0, totalEstimatedMonthlyRevenueIdr - estimatedMonthlyOpexIdr);
   const dailyWaterRequirementLiters = Math.round(breakdown.reduce((sum, item) => sum + item.waterDemandLitersPerDay, 0) * 10) / 10;
 
   // Calculate irrigation breakdown
@@ -163,6 +167,8 @@ export function calculateGardenMetrics(objects: GardenObject[]): GardenProductio
     totalPlantCapacity,
     totalYieldPerMonthKg,
     totalEstimatedMonthlyRevenueIdr,
+    estimatedMonthlyOpexIdr,
+    estimatedMonthlyNetProfitIdr,
     dailyWaterRequirementLiters,
     irrigation: {
       dripBedCount,

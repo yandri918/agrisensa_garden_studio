@@ -663,13 +663,20 @@ export function RightPanel({ onOpenVision }: RightPanelProps) {
               </div>
 
               <div className="p-3 rounded-lg bg-white/5 border border-white/5">
-                <div className="flex items-center gap-1.5 text-[11px] text-amber-400 font-medium mb-1">
-                  <Coins size={13} />
-                  <span>Estimasi Nilai</span>
+                <div className="flex items-center justify-between text-[11px] text-amber-400 font-medium mb-1">
+                  <div className="flex items-center gap-1.5">
+                    <Coins size={13} />
+                    <span>Nilai Panen Bruto</span>
+                  </div>
+                  <span className="text-[9px] font-mono text-gray-500">Gross</span>
                 </div>
                 <div className="text-base font-bold font-mono text-white">
                   Rp {(metrics.totalEstimatedMonthlyRevenueIdr / 1000).toLocaleString('id-ID')}k
                   <span className="text-xs font-normal text-gray-400">/bln</span>
+                </div>
+                <div className="text-[10px] text-emerald-400 font-mono mt-1 pt-1 border-t border-white/5 flex items-center justify-between">
+                  <span>Margin Bersih (~70%):</span>
+                  <span className="font-bold">Rp {(metrics.estimatedMonthlyNetProfitIdr / 1000).toLocaleString('id-ID')}k</span>
                 </div>
               </div>
 

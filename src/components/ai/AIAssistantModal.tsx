@@ -1,15 +1,16 @@
 /**
  * AgriSensa Garden Studio — AI Assistant Modal
- * Configures goals, custom instructions, and invokes Gemini AI layout generator.
- * Supports:
- *  - Auto-Arranging user-chosen components from sidebar.
- *  - Generating new layouts from scratch.
+ * Configures goals, cultivation systems, and invokes Gemini AI layout generator.
+ * Features:
+ *  - Dynamic server AI health check (Gemini Cloud vs Rule-Based Engine).
+ *  - Strict collision checking with unplaced-item alerts when plot is overcrowded.
+ *  - System-specific planning (soil, hydroponic, mixed).
  * Strictly no emojis.
  */
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGardenStore } from '@/store/gardenStore';
 import { generateAIGardenPlan, type AIPlanResponse } from '@/lib/ai/plannerService';
 import {
@@ -23,11 +24,19 @@ import {
   Layers,
   Wand2,
   MessageSquare,
+  AlertTriangle,
 } from 'lucide-react';
 
 interface AIAssistantModalProps {
   isOpen: boolean;
   onClose: () => void;
+}
+
+interface AIStatusState {
+  configured: boolean;
+  model: string;
+  mode: string;
+  providerName: string;
 }
 
 export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
@@ -46,6 +55,32 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
   const [userPrompt, setUserPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [result, setResult] = useState<AIPlanResponse | null>(null);
+  const [aiStatus, setAiStatus] = useState<AIStatusState | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let isMounted = true;
+    fetch('/api/ai/status')
+      .then(res => res.json())
+      .then(data => {
+        if (isMounted) {
+          setAiStatus(data);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setAiStatus({
+            configured: false,
+            model: 'rules-engine',
+            mode: 'deterministic_rules',
+            providerName: 'Rule-Based Spatial Engine (Offline)',
+          });
+        }
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -60,6 +95,7 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
           system: systemType,
           systemType,
         },
+        systemType,
         goal,
         mode,
         existingObjects: garden.objects,
@@ -107,15 +143,27 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
 
         {/* Modal Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-5">
-          {/* Engine Status Badge */}
-          <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs text-emerald-300">
-              <Cpu size={14} className="text-emerald-400" />
-              <span className="font-medium">Model: Google Gemini 2.5 Flash</span>
+          {/* Dynamic Engine Status Badge */}
+          <div
+            className={`p-2.5 rounded-lg border flex items-center justify-between transition-colors ${
+              aiStatus?.configured
+                ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-300'
+                : 'bg-amber-500/10 border-amber-500/25 text-amber-300'
+            }`}
+          >
+            <div className="flex items-center gap-2 text-xs">
+              <Cpu size={14} className={aiStatus?.configured ? 'text-emerald-400' : 'text-amber-400'} />
+              <span className="font-medium">
+                {aiStatus?.configured ? 'Model: Google Gemini 2.5 Flash' : 'Mesin: Rule-Based Spatial Engine'}
+              </span>
             </div>
-            <div className="flex items-center gap-1.5 text-[11px] font-mono text-emerald-400">
+            <div
+              className={`flex items-center gap-1.5 text-[11px] font-mono ${
+                aiStatus?.configured ? 'text-emerald-400' : 'text-amber-400'
+              }`}
+            >
               <KeyRound size={12} />
-              <span>API Key Terhubung</span>
+              <span>{aiStatus?.configured ? 'Gemini AI Aktif (Cloud)' : 'Mode Lokal Deterministik'}</span>
             </div>
           </div>
 
@@ -144,7 +192,7 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
                   )}
                 </div>
                 <div className="text-[10px] text-gray-400">
-                  AI menata posisi terbaik untuk komponen yang sudah Anda tambahkan dari sidebar tanpa menghapusnya.
+                  AI menata posisi terbaik untuk komponen yang sudah Anda tambahkan dari sidebar tanpa tumpang tindih.
                 </div>
               </button>
 
@@ -162,7 +210,7 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
                   <span>Rancang Baru dari Nol</span>
                 </div>
                 <div className="text-[10px] text-gray-400">
-                  AI merancang kebun lengkap baru (bedengan, hidroponik, kolam, jalur) sesuai ukuran lahan.
+                  AI merancang kebun lengkap baru (sesuai sistem budidaya tanah/hidroponik) presisi ukuran lahan.
                 </div>
               </button>
             </div>
@@ -251,10 +299,10 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
               <Sparkles size={16} />
               <span>
                 {isGenerating
-                  ? 'Gemini Sedang Menganalisis Lahan & Geometri...'
+                  ? 'Sedang Menganalisis Lahan & Geometri Spasial...'
                   : mode === 'auto_arrange'
-                  ? `Optimalkan Posisi ${existingCount} Komponen dengan Gemini AI`
-                  : 'Rancang Tata Letak Baru dengan Gemini AI'}
+                  ? `Optimalkan Posisi ${existingCount} Komponen Bebas Tabrakan`
+                  : `Rancang Kebun Baru (${systemType === 'soil' ? 'Tanah' : systemType === 'hydroponic' ? 'Hidroponik' : 'Kombinasi'})`}
               </span>
             </button>
           )}
@@ -262,6 +310,17 @@ export function AIAssistantModal({ isOpen, onClose }: AIAssistantModalProps) {
           {/* AI Result Card */}
           {result && (
             <div className="space-y-4 pt-3 border-t border-white/10">
+              {/* Overcrowding Warning if any */}
+              {result.warning && (
+                <div className="p-3 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs space-y-1">
+                  <div className="flex items-center gap-1.5 font-bold text-amber-400">
+                    <AlertTriangle size={15} />
+                    <span>Peringatan Kapasitas Spasial Lahan</span>
+                  </div>
+                  <p className="text-[11px] text-amber-200/90 leading-relaxed">{result.warning}</p>
+                </div>
+              )}
+
               <div className="p-3.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400">

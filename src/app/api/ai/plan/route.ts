@@ -12,6 +12,7 @@ interface RequestBody {
   plot: Plot;
   goal: 'personal' | 'market' | 'mixed';
   mode?: 'auto_arrange' | 'generate_new';
+  systemType?: 'soil' | 'hydroponic' | 'mixed';
   existingObjects?: GardenObject[];
   userPrompt?: string;
 }
@@ -19,7 +20,7 @@ interface RequestBody {
 export async function POST(req: Request) {
   try {
     const body: RequestBody = await req.json();
-    const { plot, goal, mode = 'auto_arrange', existingObjects = [], userPrompt } = body;
+    const { plot, goal, mode = 'auto_arrange', systemType = 'mixed', existingObjects = [], userPrompt } = body;
 
     if (!plot || typeof plot.widthM !== 'number' || typeof plot.depthM !== 'number' || plot.widthM <= 0 || plot.depthM <= 0) {
       return NextResponse.json(
@@ -31,12 +32,12 @@ export async function POST(req: Request) {
     // Limit prompt length to mitigate prompt injection / payload exhaustion
     const sanitizedPrompt = typeof userPrompt === 'string' ? userPrompt.trim().slice(0, 1000) : undefined;
 
-    // Secure server-side API Key retrieval
-    const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+    // Secure server-side API Key retrieval (Strictly server-side environment variable)
+    const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey || apiKey.trim().length === 0) {
       return NextResponse.json(
-        { error: 'API_KEY_MISSING', message: 'GEMINI_API_KEY belum dikonfigurasi di server.' },
+        { error: 'API_KEY_MISSING', message: 'GEMINI_API_KEY belum dikonfigurasi di server Railway / .env.' },
         { status: 401 }
       );
     }
@@ -108,16 +109,24 @@ KEMBALIKAN HANYA JSON MURNI TANPA MARKDOWN CODEBLOCK:
 }
 `;
     } else {
+      const systemGuide =
+        systemType === 'hydroponic'
+          ? 'Sistem Utama: HIDROPONIK PENUH. Prioritaskan instalasi rak A-Frame / NFT hidroponik (tipe "hydroponic"), tandon nutrisi ("water_source"), dan sensor IoT ("iot_sensor"). Hindari bedengan tanah terbuka.'
+          : systemType === 'soil'
+          ? 'Sistem Utama: TANAH / BEDENGAN ORGANIK. Prioritaskan bedengan kayu ("raised_bed") dengan irigasi tetes ("drip"), area kompos ("compost"), sensor kelembapan tanah, dan titik air ("water_source"). Hindari rak hidroponik.'
+          : 'Sistem Utama: KOMBINASI (BEDENGAN TANAH + HIDROPONIK). Rancang perpaduan seimbang antara bedengan tanah ("raised_bed") untuk tanaman buah/akar dan rak hidroponik ("hydroponic") untuk sayuran daun cepat panen.';
+
       prompt = `
 Anda adalah agronomist dan arsitek lanskap kebun pangan AgriSensa.
 Rancang denah kebun sayur presisi:
 - Dimensi Lahan: ${widthM}m x ${depthM}m (Luas: ${areaM2} m²)
 - Tujuan: ${goal === 'market' ? 'Komersial / Pasar' : 'Konsumsi Keluarga'}
+- ${systemGuide}
 ${sanitizedPrompt ? `- Instruksi Khusus Pengguna: "${sanitizedPrompt}"` : ''}
 
 KEMBALIKAN HANYA JSON MURNI:
 {
-  "explanation": "Penjelasan rinci strategi penataan agronomis dan sirkulasi cahaya",
+  "explanation": "Penjelasan rinci strategi penataan agronomis, sistem budidaya (${systemType}), dan efisiensi ruang",
   "weeklyAdvice": [
     "Minggu 1: Persiapan media dan instalasi",
     "Minggu 2: Pindah tanam dan nutrisi",
