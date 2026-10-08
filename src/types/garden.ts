@@ -39,7 +39,8 @@ export type FacilityType =
   | 'water_source'
   | 'compost'
   | 'decorative'
-  | 'fixed_object'; // trees, existing structures
+  | 'fixed_object' // trees, existing structures
+  | 'iot_sensor';  // soil moisture, EC, temp telemetry probe
 
 // ─── Crop Assignment ──────────────────────────────────────────────────────────
 
@@ -114,6 +115,39 @@ export interface VisionDiagnosisResponse {
     };
     spacingAction?: string;
   };
+}
+
+// ─── Weather & Precision Agronomy Types ─────────────────────────────────────
+
+export interface WeatherResponse {
+  city: string;
+  latitude: number;
+  longitude: number;
+  elevation: number;
+  current: {
+    temperatureC: number;
+    relativeHumidityPct: number;
+    precipitationMm: number;
+    rainMm: number;
+    weatherCode: number;
+    weatherDescription: string;
+    windSpeedKmh: number;
+  };
+  daily: {
+    et0EvapotranspirationMm: number;
+    precipitationProbabilityMaxPct: number;
+    precipitationSumMm: number;
+    tempMaxC: number;
+    tempMinC: number;
+  };
+  smartAdvisory: {
+    rainDelay: boolean;
+    irrigationMultiplier: number;
+    irrigationAdvice: string;
+    diseaseRiskLevel: 'low' | 'moderate' | 'high';
+    diseaseAdvice: string;
+  };
+  cachedAt?: string;
 }
 
 // ─── Plot ─────────────────────────────────────────────────────────────────────

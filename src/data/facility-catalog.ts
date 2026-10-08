@@ -157,6 +157,20 @@ export const FACILITY_CATALOG: FacilityEntry[] = [
     requiresAccess: false,
     notes: 'Pohon eksisting, tiang, atau bangunan yang tidak bisa dipindah.',
   },
+  {
+    type: 'iot_sensor',
+    nameId: 'Sensor Probe IoT',
+    nameEn: 'IoT Soil Probe',
+    iconName: 'Radio',
+    category: 'infrastructure',
+    layer: 'utility',
+    color: '#06b6d4',
+    defaultSize: { widthM: 0.3, depthM: 0.3, heightM: 0.6 },
+    minSize: { widthM: 0.2, depthM: 0.2 },
+    maxSize: { widthM: 0.5, depthM: 0.5 },
+    requiresAccess: false,
+    notes: 'Probe telemetri tanah cerdas: memantau kelembaban (%), EC nutrisi, dan suhu akar.',
+  },
 ];
 
 // ─── Lookup Helpers ───────────────────────────────────────────────────────────

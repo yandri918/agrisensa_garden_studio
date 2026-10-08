@@ -20,6 +20,7 @@ import {
   RotateCcw,
   Scan,
 } from 'lucide-react';
+import { WeatherWidget } from '@/components/weather/WeatherWidget';
 
 interface HeaderProps {
   onOpenAI: () => void;
@@ -155,6 +156,9 @@ export function Header({ onOpenAI, onOpenExport, onOpenVision }: HeaderProps) {
             </>
           )}
         </div>
+
+        {/* Live Weather & Microclimate Telemetry Widget */}
+        <WeatherWidget onOpenVisionScanner={onOpenVision} />
 
         {/* AI Vision Scanner Modal Trigger */}
         {onOpenVision && (

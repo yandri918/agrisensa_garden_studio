@@ -473,6 +473,14 @@ export function GardenCanvas() {
                     />
                   )}
 
+                  {objType === 'iot_sensor' && (
+                    <g pointerEvents="none">
+                      <circle cx={cx} cy={cy} r={Math.min(w, h) * 0.4} fill="#06b6d4" fillOpacity={0.25} stroke="#22d3ee" strokeWidth="1.5" />
+                      <circle cx={cx} cy={cy} r={Math.min(w, h) * 0.2} fill="#0891b2" />
+                      <circle cx={cx} cy={cy} r={2.5} fill="#ffffff" />
+                    </g>
+                  )}
+
                   {/* Object Label & Dimensions */}
                   <text
                     x={cx}
