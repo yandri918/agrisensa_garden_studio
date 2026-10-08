@@ -22,6 +22,7 @@ import {
   Ban,
   Clock,
   Users,
+  Droplets,
 } from 'lucide-react';
 import type { GardenObject, Rect } from '@/types/garden';
 
@@ -29,6 +30,7 @@ export function ObjectPalette() {
   const [tab, setTab] = useState<'facilities' | 'crops' | 'plot'>('facilities');
   const garden = useGardenStore(state => state.garden);
   const addObject = useGardenStore(state => state.addObject);
+  const updateObject = useGardenStore(state => state.updateObject);
   const setPlot = useGardenStore(state => state.setPlot);
   const setGardenName = useGardenStore(state => state.setGardenName);
   const setPreferences = useGardenStore(state => state.setPreferences);
@@ -322,6 +324,98 @@ export function ObjectPalette() {
                     }}
                     className="w-full bg-black/40 border border-white/10 rounded px-2.5 py-1 text-xs text-white font-mono"
                   />
+                </div>
+              </div>
+            </div>
+
+            {/* Water Source & Irrigation Grid */}
+            <div className="pt-2 border-t border-white/10 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-[11px] font-mono uppercase text-gray-400 tracking-wider">
+                  <Droplets size={13} className="text-cyan-400" />
+                  <span>Sumber Air & Jaringan Irigasi</span>
+                </div>
+              </div>
+
+              {/* Water Source Type & Pressure */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[10px] text-gray-400 block mb-1">Tipe Suplai</label>
+                  <select
+                    value={garden.plot.waterSource.type}
+                    onChange={e =>
+                      setPlot({
+                        waterSource: {
+                          ...garden.plot.waterSource,
+                          type: e.target.value as 'tap' | 'tank' | 'pump',
+                        },
+                      })
+                    }
+                    className="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-xs text-white"
+                  >
+                    <option value="tap">Keran PDAM/Sumur</option>
+                    <option value="tank">Tandon Gravitasi (Toren)</option>
+                    <option value="pump">Pompa Otomatis</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] text-gray-400 block mb-1">Tekanan Kerja (Bar)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="0.5"
+                    max="5.0"
+                    value={garden.plot.waterSource.pressureBar || 1.5}
+                    onChange={e =>
+                      setPlot({
+                        waterSource: {
+                          ...garden.plot.waterSource,
+                          pressureBar: parseFloat(e.target.value) || 1.5,
+                        },
+                      })
+                    }
+                    className="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-xs text-white font-mono"
+                  />
+                </div>
+              </div>
+
+              {/* Quick Batch Setup */}
+              <div className="space-y-1.5 pt-1">
+                <div className="text-[10px] text-gray-400">Pemasangan Otomatis Semua Bedengan:</div>
+                <div className="grid grid-cols-2 gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      garden.objects.forEach(obj => {
+                        if (obj.type === 'raised_bed' || obj.facilityType === 'raised_bed') {
+                          updateObject(obj.id, {
+                            irrigationType: 'drip',
+                            dripSpacingCm: 20,
+                            dripLinesCount: 2,
+                          });
+                        }
+                      });
+                    }}
+                    className="py-1 px-1.5 rounded bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-[10px] text-cyan-300 font-medium transition-colors text-center"
+                  >
+                    Pasang Tetes (Drip)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      garden.objects.forEach(obj => {
+                        if (obj.type === 'raised_bed' || obj.facilityType === 'raised_bed') {
+                          updateObject(obj.id, {
+                            irrigationType: 'sprinkler',
+                            sprinklerRadiusM: 2.0,
+                          });
+                        }
+                      });
+                    }}
+                    className="py-1 px-1.5 rounded bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 text-[10px] text-blue-300 font-medium transition-colors text-center"
+                  >
+                    Pasang Sprinkler
+                  </button>
                 </div>
               </div>
             </div>

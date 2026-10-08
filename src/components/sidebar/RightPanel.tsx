@@ -267,8 +267,182 @@ export function RightPanel() {
                     </select>
                   </div>
                 )}
+
+                {/* ── Irrigation Configuration ── */}
+                {(objType === 'raised_bed' || objType === 'hydroponic' || objType === 'decorative') && (
+                  <div className="space-y-3 pt-3 border-t border-white/10">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-[11px] font-mono uppercase text-gray-400">
+                        <Droplets size={13} className="text-cyan-400" />
+                        <span>Sistem Irigasi</span>
+                      </div>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded font-mono bg-cyan-500/15 text-cyan-400 border border-cyan-500/30">
+                        {selectedObj.irrigationType === 'drip'
+                          ? 'Tetes Presisi'
+                          : selectedObj.irrigationType === 'sprinkler'
+                          ? 'Sprinkler'
+                          : selectedObj.irrigationType === 'manual'
+                          ? 'Manual'
+                          : 'Belum Diatur'}
+                      </span>
+                    </div>
+
+                    {/* Mode Selector Buttons */}
+                    <div className="grid grid-cols-3 gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateObject(selectedObj.id, {
+                            irrigationType: 'drip',
+                            dripSpacingCm: selectedObj.dripSpacingCm || 20,
+                            dripLinesCount: selectedObj.dripLinesCount || 2,
+                          })
+                        }
+                        className={`py-2 px-1 text-center rounded border text-[11px] font-medium transition-all ${
+                          selectedObj.irrigationType === 'drip'
+                            ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-sm shadow-cyan-500/20'
+                            : 'bg-black/30 border-white/10 text-gray-400 hover:text-white hover:bg-white/5'
+                        }`}
+                      >
+                        <div className="font-semibold">Tetes (Drip)</div>
+                        <div className="text-[9px] opacity-75">Hemat Air</div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateObject(selectedObj.id, {
+                            irrigationType: 'sprinkler',
+                            sprinklerRadiusM: selectedObj.sprinklerRadiusM || 2.0,
+                          })
+                        }
+                        className={`py-2 px-1 text-center rounded border text-[11px] font-medium transition-all ${
+                          selectedObj.irrigationType === 'sprinkler'
+                            ? 'bg-blue-500/20 border-blue-400 text-blue-300 shadow-sm shadow-blue-500/20'
+                            : 'bg-black/30 border-white/10 text-gray-400 hover:text-white hover:bg-white/5'
+                        }`}
+                      >
+                        <div className="font-semibold">Sprinkler</div>
+                        <div className="text-[9px] opacity-75">Semprot Mikro</div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => updateObject(selectedObj.id, { irrigationType: 'manual' })}
+                        className={`py-2 px-1 text-center rounded border text-[11px] font-medium transition-all ${
+                          selectedObj.irrigationType === 'manual'
+                            ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300'
+                            : 'bg-black/30 border-white/10 text-gray-400 hover:text-white hover:bg-white/5'
+                        }`}
+                      >
+                        <div className="font-semibold">Manual</div>
+                        <div className="text-[9px] opacity-75">Gembor/Selang</div>
+                      </button>
+                    </div>
+
+                    {/* Drip Details */}
+                    {selectedObj.irrigationType === 'drip' && (
+                      <div className="p-2.5 rounded-lg bg-cyan-950/30 border border-cyan-500/20 space-y-2.5 text-xs">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[10px] text-gray-400 block mb-1">Jarak Lubang (Emitter)</label>
+                            <select
+                              value={selectedObj.dripSpacingCm || 20}
+                              onChange={e =>
+                                updateObject(selectedObj.id, { dripSpacingCm: parseInt(e.target.value) || 20 })
+                              }
+                              className="w-full bg-black/50 border border-white/10 rounded px-2 py-1 text-xs text-white"
+                            >
+                              <option value={15}>15 cm (Rapat - Selada/Pakcoy)</option>
+                              <option value={20}>20 cm (Standar)</option>
+                              <option value={30}>30 cm (Lebar - Cabai/Tomat)</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-gray-400 block mb-1">Jumlah Lajur Selang</label>
+                            <select
+                              value={selectedObj.dripLinesCount || 2}
+                              onChange={e =>
+                                updateObject(selectedObj.id, { dripLinesCount: parseInt(e.target.value) || 2 })
+                              }
+                              className="w-full bg-black/50 border border-white/10 rounded px-2 py-1 text-xs text-white"
+                            >
+                              <option value={1}>1 Lajur (Bedengan &lt; 0.6m)</option>
+                              <option value={2}>2 Lajur (Standar 0.8-1.2m)</option>
+                              <option value={3}>3 Lajur (Bedengan Lebar)</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between text-[11px] text-cyan-200/90 pt-1 border-t border-cyan-500/10 font-mono">
+                          <span>Titik Tetes: ~{Math.floor((selectedObj.size.depthM / ((selectedObj.dripSpacingCm || 20) / 100)) * (selectedObj.dripLinesCount || 2))} emitter</span>
+                          <span>Durasi: ~15-20 mnt/hr</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Sprinkler Details */}
+                    {selectedObj.irrigationType === 'sprinkler' && (
+                      <div className="p-2.5 rounded-lg bg-blue-950/30 border border-blue-500/20 space-y-2.5 text-xs">
+                        <div>
+                          <div className="flex justify-between text-[11px] mb-1">
+                            <span className="text-gray-400">Radius Semprot (Jangkauan)</span>
+                            <span className="text-blue-300 font-mono font-semibold">
+                              {(selectedObj.sprinklerRadiusM || 2.0).toFixed(1)} meter
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min="1.0"
+                            max="4.0"
+                            step="0.25"
+                            value={selectedObj.sprinklerRadiusM || 2.0}
+                            onChange={e =>
+                              updateObject(selectedObj.id, { sprinklerRadiusM: parseFloat(e.target.value) || 2.0 })
+                            }
+                            className="w-full accent-blue-500 cursor-pointer"
+                          />
+                          <div className="flex justify-between text-[9px] text-gray-500 font-mono">
+                            <span>1.0m (Mikro)</span>
+                            <span>Diameter: {((selectedObj.sprinklerRadiusM || 2.0) * 2).toFixed(1)}m</span>
+                            <span>4.0m (Taman Luas)</span>
+                          </div>
+                        </div>
+                        <div className="text-[11px] text-blue-200/90 pt-1 border-t border-blue-500/10 font-mono flex justify-between">
+                          <span>Cakupan: {(Math.PI * Math.pow(selectedObj.sprinklerRadiusM || 2.0, 2)).toFixed(1)} m²</span>
+                          <span>Durasi: ~10 mnt/hr</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Quick Apply to all similar beds */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const targetType = selectedObj.type || selectedObj.facilityType;
+                        const it = selectedObj.irrigationType || 'drip';
+                        const radius = selectedObj.sprinklerRadiusM || 2.0;
+                        const spacing = selectedObj.dripSpacingCm || 20;
+                        const lines = selectedObj.dripLinesCount || 2;
+
+                        garden.objects.forEach(o => {
+                          if ((o.type || o.facilityType) === targetType) {
+                            updateObject(o.id, {
+                              irrigationType: it,
+                              sprinklerRadiusM: radius,
+                              dripSpacingCm: spacing,
+                              dripLinesCount: lines,
+                            });
+                          }
+                        });
+                      }}
+                      className="w-full py-1.5 px-2 rounded bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] text-gray-300 font-medium transition-colors flex items-center justify-center gap-1.5"
+                    >
+                      <Droplets size={12} className="text-cyan-400" />
+                      <span>Terapkan Mode Ini ke Semua {selectedObj.label?.split('#')[0]?.trim() || 'Bedengan'}</span>
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
+
               <div className="py-12 text-center text-gray-500 space-y-2">
                 <Sliders className="mx-auto text-gray-600" size={28} />
                 <p className="text-xs">Klik objek di canvas 2D untuk mengatur koordinat, ukuran, dan tanaman.</p>
@@ -389,6 +563,40 @@ export function RightPanel() {
                   {metrics.totalPlantCapacity} <span className="text-xs font-normal text-gray-400">titik tanam</span>
                 </div>
               </div>
+            </div>
+
+            {/* Irrigation & Water Schedule Card */}
+            <div className="p-3 rounded-lg bg-cyan-950/20 border border-cyan-500/20 space-y-2">
+              <div className="flex items-center justify-between text-xs font-semibold text-cyan-300">
+                <div className="flex items-center gap-1.5">
+                  <Droplets size={14} className="text-cyan-400" />
+                  <span>Jadwal & Efisiensi Irigasi</span>
+                </div>
+                <span className="text-[10px] font-mono text-cyan-400/80">Otomasi Zona</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-[11px] text-gray-300">
+                <div className="p-2 rounded bg-black/40 border border-white/5 space-y-0.5">
+                  <div className="text-[10px] text-cyan-400 font-mono">ZONA TETES (DRIP)</div>
+                  <div className="text-sm font-bold text-white font-mono">
+                    {metrics.irrigation?.dripBedCount || 0} bedengan
+                  </div>
+                  <div className="text-[10px] text-gray-400 font-mono">
+                    Durasi: ~{metrics.irrigation?.recommendedDripDurationMin || 15} mnt/hr
+                  </div>
+                </div>
+                <div className="p-2 rounded bg-black/40 border border-white/5 space-y-0.5">
+                  <div className="text-[10px] text-blue-400 font-mono">SPRINKLER MIKRO</div>
+                  <div className="text-sm font-bold text-white font-mono">
+                    {metrics.irrigation?.sprinklerCount || 0} titik semprot
+                  </div>
+                  <div className="text-[10px] text-gray-400 font-mono">
+                    Durasi: ~{metrics.irrigation?.recommendedSprinklerDurationMin || 10} mnt/hr
+                  </div>
+                </div>
+              </div>
+              <p className="text-[10px] text-gray-400 leading-relaxed">
+                Rekomendasi penyiraman optimal: Pagi (06.30 - 07.30) atau Sore (16.30 - 17.30) untuk meminimalkan kehilangan air akibat evaporasi.
+              </p>
             </div>
 
             {/* Breakdown per crop */}

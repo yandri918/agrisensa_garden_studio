@@ -65,6 +65,47 @@ function Object3DMesh({ obj, isSelected }: { obj: GardenObject; isSelected: bool
               </mesh>
             );
           })}
+          {/* 3D Drip Tubes on Bed */}
+          {obj.irrigationType === 'drip' && (
+            <group position={[0, h + 0.02, 0]}>
+              {Array.from({ length: obj.dripLinesCount || 2 }).map((_, lIdx) => {
+                const count = obj.dripLinesCount || 2;
+                const tubeX = ((lIdx + 1) / (count + 1) - 0.5) * (w - 0.2);
+                return (
+                  <mesh key={`tube_${lIdx}`} position={[tubeX, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
+                    <cylinderGeometry args={[0.012, 0.012, Math.max(0.2, d - 0.2), 8]} />
+                    <meshStandardMaterial color="#0e7490" roughness={0.3} metalness={0.4} />
+                  </mesh>
+                );
+              })}
+            </group>
+          )}
+
+          {/* 3D Sprinkler Riser & Spray Disk */}
+          {obj.irrigationType === 'sprinkler' && (
+            <group position={[0, h, 0]}>
+              {/* Vertical Riser Pole */}
+              <mesh position={[0, 0.15, 0]}>
+                <cylinderGeometry args={[0.015, 0.015, 0.3, 8]} />
+                <meshStandardMaterial color="#0284c7" metalness={0.7} roughness={0.2} />
+              </mesh>
+              {/* Nozzle Head */}
+              <mesh position={[0, 0.32, 0]}>
+                <sphereGeometry args={[0.04, 12, 12]} />
+                <meshStandardMaterial color="#38bdf8" roughness={0.1} />
+              </mesh>
+              {/* Translucent Spray Coverage Ring */}
+              <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                <ringGeometry args={[0.1, obj.sprinklerRadiusM || 2.0, 32]} />
+                <meshBasicMaterial
+                  color="#38bdf8"
+                  transparent
+                  opacity={0.18}
+                  side={THREE.DoubleSide}
+                />
+              </mesh>
+            </group>
+          )}
         </group>
       )}
 

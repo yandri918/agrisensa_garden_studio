@@ -26,12 +26,22 @@ export interface CropYieldSummary {
   waterDemandLitersPerDay: number;
 }
 
+export interface IrrigationSummary {
+  dripBedCount: number;
+  sprinklerCount: number;
+  manualBedCount: number;
+  unassignedCount: number;
+  recommendedDripDurationMin: number;
+  recommendedSprinklerDurationMin: number;
+}
+
 export interface GardenProductionMetrics {
   totalProductionAreaM2: number;
   totalPlantCapacity: number;
   totalYieldPerMonthKg: number;
   totalEstimatedMonthlyRevenueIdr: number;
   dailyWaterRequirementLiters: number;
+  irrigation: IrrigationSummary;
   breakdown: CropYieldSummary[];
 }
 
@@ -125,12 +135,43 @@ export function calculateGardenMetrics(objects: GardenObject[]): GardenProductio
   const totalEstimatedMonthlyRevenueIdr = breakdown.reduce((sum, item) => sum + item.estimatedValueIdr, 0);
   const dailyWaterRequirementLiters = Math.round(breakdown.reduce((sum, item) => sum + item.waterDemandLitersPerDay, 0) * 10) / 10;
 
+  // Calculate irrigation breakdown
+  let dripBedCount = 0;
+  let sprinklerCount = 0;
+  let manualBedCount = 0;
+  let unassignedCount = 0;
+
+  for (const obj of objects) {
+    const t = obj.type || obj.facilityType;
+    if (t === 'raised_bed' || t === 'hydroponic') {
+      const it = obj.irrigationType || 'unspecified';
+      if (it === 'drip') dripBedCount++;
+      else if (it === 'sprinkler') sprinklerCount++;
+      else if (it === 'manual') manualBedCount++;
+      else unassignedCount++;
+    }
+  }
+
+  // Durations based on water demand and typical flow rates
+  // Drip: ~2L/h per emitter -> ~15-25 min
+  // Sprinkler: ~50L/h per head -> ~10-15 min
+  const recommendedDripDurationMin = dripBedCount > 0 ? Math.min(45, Math.max(10, Math.round(dailyWaterRequirementLiters / Math.max(1, dripBedCount * 4) * 5))) : 15;
+  const recommendedSprinklerDurationMin = sprinklerCount > 0 ? Math.min(30, Math.max(5, Math.round(dailyWaterRequirementLiters / Math.max(1, sprinklerCount * 10) * 5))) : 10;
+
   return {
     totalProductionAreaM2: Math.round(totalProductionArea * 100) / 100,
     totalPlantCapacity,
     totalYieldPerMonthKg,
     totalEstimatedMonthlyRevenueIdr,
     dailyWaterRequirementLiters,
+    irrigation: {
+      dripBedCount,
+      sprinklerCount,
+      manualBedCount,
+      unassignedCount,
+      recommendedDripDurationMin,
+      recommendedSprinklerDurationMin,
+    },
     breakdown,
   };
 }

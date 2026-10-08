@@ -57,6 +57,34 @@ export function validateLayout(
     // Graceful fallback if access check grid fails
   }
 
+  // 4. Irrigation checks (sprinkler on chicken coop)
+  for (const obj of objects) {
+    if (obj.irrigationType === 'sprinkler') {
+      const radius = obj.sprinklerRadiusM || 2.0;
+      const cx = obj.position.x + obj.size.widthM / 2;
+      const cy = (obj.position.y ?? obj.position.z ?? 0) + obj.size.depthM / 2;
+
+      for (const target of objects) {
+        if (target.id === obj.id) continue;
+        const targetType = target.type || target.facilityType;
+        if (targetType === 'chicken_coop') {
+          const tcx = target.position.x + target.size.widthM / 2;
+          const tcy = (target.position.y ?? target.position.z ?? 0) + target.size.depthM / 2;
+          const dist = Math.hypot(cx - tcx, cy - tcy);
+          if (dist < radius + Math.min(target.size.widthM, target.size.depthM) / 2) {
+            conflicts.push({
+              id: `conflict_sprinkler_coop_${obj.id}_${target.id}`,
+              type: 'SPRINKLER_ON_COOP',
+              ids: [obj.id, target.id],
+              objectId: obj.id,
+              message: `Sprinkler pada "${obj.label || 'Objek'}" mengenai area kandang unggas "${target.label || 'Kandang'}". Semprotan air langsung membahayakan kesehatan ayam!`,
+            });
+          }
+        }
+      }
+    }
+  }
+
   const isValid = conflicts.length === 0;
   const status =
     isValid ? 'valid'

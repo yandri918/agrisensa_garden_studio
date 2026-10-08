@@ -20,6 +20,7 @@ import {
   Maximize2,
   Compass,
   ArrowUp,
+  Droplets,
 } from 'lucide-react';
 
 export function GardenCanvas() {
@@ -38,6 +39,7 @@ export function GardenCanvas() {
   const [panOffset, setPanOffset] = useState({ x: 80, y: 80 });
   const [isPanning, setIsPanning] = useState(false);
   const [startPan, setStartPan] = useState({ x: 0, y: 0 });
+  const [showIrrigationOverlay, setShowIrrigationOverlay] = useState(true);
 
   // Object Dragging State
   const [dragState, setDragState] = useState<{
@@ -165,6 +167,14 @@ export function GardenCanvas() {
         <div className="h-5 w-[1px] bg-white/10" />
         <button className="btn-icon" onClick={handleFitToScreen} title="Fit to Screen">
           <Maximize2 size={16} />
+        </button>
+        <div className="h-5 w-[1px] bg-white/10" />
+        <button
+          className={`btn-icon ${showIrrigationOverlay ? 'active !text-cyan-400 !border-cyan-500/50 !bg-cyan-500/15' : ''}`}
+          onClick={() => setShowIrrigationOverlay(!showIrrigationOverlay)}
+          title={showIrrigationOverlay ? 'Sembunyikan Lapisan Irigasi' : 'Tampilkan Lapisan Irigasi'}
+        >
+          <Droplets size={16} />
         </button>
         <span className="text-[11px] text-gray-400 font-mono px-2">
           {Math.round(scale)} px/m
@@ -337,6 +347,26 @@ export function GardenCanvas() {
             </g>
           )}
 
+          {/* Water Source Marker */}
+          {plot.waterSource && (
+            <g
+              transform={`translate(${m2px(plot.waterSource.position.x)}, ${m2px(plot.waterSource.position.y ?? plot.waterSource.position.z ?? 0)})`}
+            >
+              <circle r="8" fill="#0284c7" />
+              <circle r="14" fill="none" stroke="#38bdf8" strokeWidth="1.5" strokeDasharray="3 3" />
+              <text
+                x="18"
+                y="4"
+                fill="#38bdf8"
+                fontSize="10"
+                fontFamily="var(--font-mono)"
+                fontWeight="bold"
+              >
+                SUMBER AIR ({plot.waterSource.type.toUpperCase()})
+              </text>
+            </g>
+          )}
+
           {/* ── 2. Excluded Zones ── */}
           {plot.excludedZones.map((zone, idx) => {
             const zY = zone.y ?? zone.z ?? 0;
@@ -474,12 +504,138 @@ export function GardenCanvas() {
                   {isLocked && (
                     <circle cx={w - 10} cy={10} r="5" fill="#f59e0b" />
                   )}
+
+                  {/* Drip Irrigation Lateral Lines & Emitters */}
+                  {showIrrigationOverlay && obj.irrigationType === 'drip' && (
+                    <g pointerEvents="none">
+                      {Array.from({ length: obj.dripLinesCount || 2 }).map((_, lineIdx) => {
+                        const lineCount = obj.dripLinesCount || 2;
+                        const lineX = (w * (lineIdx + 1)) / (lineCount + 1);
+                        const spacingPx = m2px((obj.dripSpacingCm || 20) / 100);
+                        const emitterCount = Math.max(2, Math.floor(h / spacingPx));
+                        return (
+                          <g key={lineIdx}>
+                            <line
+                              x1={lineX}
+                              y1={4}
+                              x2={lineX}
+                              y2={h - 4}
+                              stroke="#06b6d4"
+                              strokeWidth="1.5"
+                              strokeDasharray="4 2"
+                            />
+                            {Array.from({ length: emitterCount }).map((_, emIdx) => {
+                              const emY = 8 + (emIdx * (h - 16)) / Math.max(1, emitterCount - 1);
+                              return (
+                                <circle
+                                  key={emIdx}
+                                  cx={lineX}
+                                  cy={emY}
+                                  r="2"
+                                  fill="#22d3ee"
+                                />
+                              );
+                            })}
+                          </g>
+                        );
+                      })}
+                      <rect x="3" y="3" width="26" height="11" rx="2" fill="#083344" fillOpacity="0.85" />
+                      <text x="16" y="11" textAnchor="middle" fill="#22d3ee" fontSize="7.5" fontFamily="var(--font-mono)" fontWeight="bold">DRIP</text>
+                    </g>
+                  )}
+
+                  {/* Sprinkler Badge */}
+                  {showIrrigationOverlay && obj.irrigationType === 'sprinkler' && (
+                    <g pointerEvents="none">
+                      <rect x="3" y="3" width="48" height="11" rx="2" fill="#1e3a8a" fillOpacity="0.85" />
+                      <text x="27" y="11" textAnchor="middle" fill="#93c5fd" fontSize="7.5" fontFamily="var(--font-mono)" fontWeight="bold">SPRINKLER</text>
+                    </g>
+                  )}
                 </g>
               </g>
             );
           })}
+
+          {/* ── 4. Irrigation Network & Sprinkler Radii Layer ── */}
+          {showIrrigationOverlay && (
+            <g pointerEvents="none">
+              {/* Pipelines from Water Source to Irrigated Objects */}
+              {garden.objects.map(obj => {
+                if (obj.irrigationType !== 'drip' && obj.irrigationType !== 'sprinkler') return null;
+                const ws = garden.plot.waterSource;
+                const wsX = m2px(ws.position.x);
+                const wsY = m2px(ws.position.y ?? ws.position.z ?? 0);
+                const objX = m2px(obj.position.x + obj.size.widthM / 2);
+                const objY = m2px((obj.position.y ?? obj.position.z ?? 0) + obj.size.depthM / 2);
+
+                return (
+                  <g key={`pipe_${obj.id}`}>
+                    <line
+                      x1={wsX}
+                      y1={wsY}
+                      x2={objX}
+                      y2={objY}
+                      stroke="rgba(14, 165, 233, 0.45)"
+                      strokeWidth="1.5"
+                      strokeDasharray="4 3"
+                    />
+                    <circle cx={objX} cy={objY} r="3" fill="#0284c7" />
+                  </g>
+                );
+              })}
+
+              {/* Sprinkler Coverage Circles */}
+              {garden.objects.map(obj => {
+                if (obj.irrigationType !== 'sprinkler') return null;
+                const radiusM = obj.sprinklerRadiusM || 2.0;
+                const rPx = m2px(radiusM);
+                const cx = m2px(obj.position.x + obj.size.widthM / 2);
+                const cy = m2px((obj.position.y ?? obj.position.z ?? 0) + obj.size.depthM / 2);
+
+                return (
+                  <g key={`sprinkler_circle_${obj.id}`}>
+                    {/* Spray Coverage Area */}
+                    <circle
+                      cx={cx}
+                      cy={cy}
+                      r={rPx}
+                      fill="rgba(59, 130, 246, 0.12)"
+                      stroke="#3b82f6"
+                      strokeWidth="1.5"
+                      strokeDasharray="6 3"
+                    />
+                    {/* Inner Spray Ripple */}
+                    <circle
+                      cx={cx}
+                      cy={cy}
+                      r={rPx * 0.55}
+                      fill="none"
+                      stroke="rgba(59, 130, 246, 0.25)"
+                      strokeWidth="1"
+                      strokeDasharray="2 3"
+                    />
+                    {/* Nozzle center */}
+                    <circle cx={cx} cy={cy} r="6" fill="#1d4ed8" stroke="#ffffff" strokeWidth="1.5" />
+                    <circle cx={cx} cy={cy} r="2" fill="#93c5fd" />
+                    <text
+                      x={cx}
+                      y={cy - rPx + 14}
+                      textAnchor="middle"
+                      fill="#60a5fa"
+                      fontSize="10"
+                      fontFamily="var(--font-mono)"
+                      fontWeight="600"
+                    >
+                      SPRINKLER (r={radiusM.toFixed(1)}m)
+                    </text>
+                  </g>
+                );
+              })}
+            </g>
+          )}
         </g>
       </svg>
+
     </div>
   );
 }

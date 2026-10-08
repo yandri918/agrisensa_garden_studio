@@ -70,6 +70,11 @@ export interface GardenObject {
   cropAssignments?: CropAssignment[];
   plantSpeciesId?: string; // primary assigned crop
   irrigationZoneId?: string;
+  irrigationType?: IrrigationType; // 'drip' | 'sprinkler' | 'manual' | 'unspecified'
+  sprinklerRadiusM?: number;       // radius in meters for sprinkler (e.g. 1.0 - 4.0m)
+  dripSpacingCm?: number;          // distance between emitters in cm (15, 20, 30cm)
+  dripLinesCount?: number;         // number of drip lateral pipes (1, 2, 3)
+  irrigationRateLph?: number;      // estimated emitter flow in L/h
   notes?: string;
 }
 
@@ -260,6 +265,9 @@ export function createDefaultGarden(overrides?: Partial<GardenState>): GardenSta
         isLocked: false,
         required: true,
         plantSpeciesId: 'selada',
+        irrigationType: 'drip',
+        dripSpacingCm: 20,
+        dripLinesCount: 2,
       },
       {
         id: 'obj_default_bed_2',
@@ -273,6 +281,8 @@ export function createDefaultGarden(overrides?: Partial<GardenState>): GardenSta
         isLocked: false,
         required: true,
         plantSpeciesId: 'pakcoy',
+        irrigationType: 'sprinkler',
+        sprinklerRadiusM: 2.0,
       },
       {
         id: 'obj_default_hydro',
@@ -286,6 +296,7 @@ export function createDefaultGarden(overrides?: Partial<GardenState>): GardenSta
         isLocked: false,
         required: false,
         plantSpeciesId: 'kale',
+        irrigationType: 'drip',
       },
       {
         id: 'obj_default_path',
