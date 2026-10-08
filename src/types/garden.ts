@@ -75,7 +75,45 @@ export interface GardenObject {
   dripSpacingCm?: number;          // distance between emitters in cm (15, 20, 30cm)
   dripLinesCount?: number;         // number of drip lateral pipes (1, 2, 3)
   irrigationRateLph?: number;      // estimated emitter flow in L/h
+  // Plant Health & Computer Vision Digital Twin
+  healthStatus?: 'healthy' | 'warning' | 'critical';
+  pestAlert?: string;
+  detectedIssues?: Array<{
+    name: string;
+    confidence: number;
+    category: 'pest' | 'disease';
+    recommendation?: string;
+  }>;
   notes?: string;
+}
+
+// ─── Computer Vision & Diagnostic Types ─────────────────────────────────────
+
+export interface VisionPrediction {
+  class: string;
+  confidence: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  color?: string;
+}
+
+export interface VisionDiagnosisResponse {
+  modelUsed: string;
+  projectName: string;
+  predictions: VisionPrediction[];
+  healthStatus: 'healthy' | 'warning' | 'critical';
+  summary: string;
+  recommendations: {
+    organic: string[];
+    chemical: string[];
+    irrigationAction?: {
+      advice: string;
+      suggestedType: 'drip' | 'sprinkler' | 'manual';
+    };
+    spacingAction?: string;
+  };
 }
 
 // ─── Plot ─────────────────────────────────────────────────────────────────────

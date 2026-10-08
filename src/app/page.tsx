@@ -14,6 +14,7 @@ import { RightPanel } from '@/components/sidebar/RightPanel';
 import { GardenCanvas } from '@/components/canvas/GardenCanvas';
 import { AIAssistantModal } from '@/components/ai/AIAssistantModal';
 import { ExportModal } from '@/components/export/ExportModal';
+import { PlantScannerModal } from '@/components/vision/PlantScannerModal';
 import { useGardenStore } from '@/store/gardenStore';
 
 // Client-only dynamic import for 3D Three.js scene
@@ -32,6 +33,7 @@ export default function Home() {
 
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isVisionModalOpen, setIsVisionModalOpen] = useState(false);
 
   // Keyboard shortcuts (Undo, Redo, Delete, Deselect)
   useEffect(() => {
@@ -70,6 +72,7 @@ export default function Home() {
       <Header
         onOpenAI={() => setIsAIModalOpen(true)}
         onOpenExport={() => setIsExportModalOpen(true)}
+        onOpenVision={() => setIsVisionModalOpen(true)}
       />
 
       {/* 2. Main Workspace (Left Palette + Center Canvas/3D + Right Inspector) */}
@@ -83,7 +86,7 @@ export default function Home() {
         </main>
 
         {/* Right: Properties Inspector, Spatial Validation Audit, Crop Metrics */}
-        <RightPanel />
+        <RightPanel onOpenVision={() => setIsVisionModalOpen(true)} />
       </div>
 
       {/* 3. Modals */}
@@ -95,6 +98,12 @@ export default function Home() {
       <ExportModal
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
+      />
+
+      <PlantScannerModal
+        isOpen={isVisionModalOpen}
+        onClose={() => setIsVisionModalOpen(false)}
+        targetBedId={selectedObjectId}
       />
     </div>
   );

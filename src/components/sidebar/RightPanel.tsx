@@ -25,9 +25,14 @@ import {
   Coins,
   Scale,
   Footprints,
+  Scan,
 } from 'lucide-react';
 
-export function RightPanel() {
+interface RightPanelProps {
+  onOpenVision?: () => void;
+}
+
+export function RightPanel({ onOpenVision }: RightPanelProps) {
   const [activeTab, setActiveTab] = useState<'inspect' | 'audit' | 'metrics'>('inspect');
 
   const garden = useGardenStore(state => state.garden);
@@ -265,6 +270,64 @@ export function RightPanel() {
                         </option>
                       ))}
                     </select>
+
+                    {/* Plant Health & Roboflow Vision Diagnostics */}
+                    <div className="pt-2 border-t border-white/10 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 text-[11px] font-mono uppercase text-gray-400">
+                          <Scan size={13} className="text-emerald-400" />
+                          <span>Status Kesehatan</span>
+                        </div>
+                        <span
+                          className={`text-[10px] px-2 py-0.5 rounded font-mono font-semibold border ${
+                            selectedObj.healthStatus === 'critical'
+                              ? 'bg-rose-500/15 text-rose-400 border-rose-500/30'
+                              : selectedObj.healthStatus === 'warning'
+                              ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
+                              : selectedObj.healthStatus === 'healthy'
+                              ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                              : 'bg-white/5 text-gray-400 border-white/10'
+                          }`}
+                        >
+                          {selectedObj.healthStatus === 'critical'
+                            ? 'Bahaya Hama'
+                            : selectedObj.healthStatus === 'warning'
+                            ? 'Waspada'
+                            : selectedObj.healthStatus === 'healthy'
+                            ? 'Sehat'
+                            : 'Belum Pindai'}
+                        </span>
+                      </div>
+
+                      {selectedObj.pestAlert && (
+                        <div className="p-2 rounded bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-300 flex items-center justify-between">
+                          <span className="truncate pr-1">Peringatan: {selectedObj.pestAlert}</span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateObject(selectedObj.id, {
+                                healthStatus: 'healthy',
+                                pestAlert: undefined,
+                                detectedIssues: [],
+                              })
+                            }
+                            className="text-[10px] text-gray-400 hover:text-white underline shrink-0"
+                          >
+                            Reset
+                          </button>
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={onOpenVision}
+                        className="w-full py-1.5 px-2 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-xs font-semibold text-emerald-300 flex items-center justify-center gap-1.5 transition-colors"
+                        title="Pindai daun bedengan ini menggunakan Computer Vision Roboflow"
+                      >
+                        <Scan size={13} className="text-emerald-400" />
+                        <span>Inspeksi Daun (Roboflow Vision)</span>
+                      </button>
+                    </div>
                   </div>
                 )}
 

@@ -18,14 +18,16 @@ import {
   AlertTriangle,
   CheckCircle2,
   RotateCcw,
+  Scan,
 } from 'lucide-react';
 
 interface HeaderProps {
   onOpenAI: () => void;
   onOpenExport: () => void;
+  onOpenVision?: () => void;
 }
 
-export function Header({ onOpenAI, onOpenExport }: HeaderProps) {
+export function Header({ onOpenAI, onOpenExport, onOpenVision }: HeaderProps) {
   const garden = useGardenStore(state => state.garden);
   const viewMode = useGardenStore(state => state.viewMode);
   const setViewMode = useGardenStore(state => state.setViewMode);
@@ -153,6 +155,18 @@ export function Header({ onOpenAI, onOpenExport }: HeaderProps) {
             </>
           )}
         </div>
+
+        {/* AI Vision Scanner Modal Trigger */}
+        {onOpenVision && (
+          <button
+            onClick={onOpenVision}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-300 transition-all shadow-sm"
+            title="Pindai Hama & Penyakit Tanaman dengan Roboflow Vision"
+          >
+            <Scan size={14} className="text-emerald-400" />
+            <span>AI Vision</span>
+          </button>
+        )}
 
         {/* AI Planner Modal Trigger */}
         <button

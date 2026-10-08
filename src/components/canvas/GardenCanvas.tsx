@@ -505,6 +505,30 @@ export function GardenCanvas() {
                     <circle cx={w - 10} cy={10} r="5" fill="#f59e0b" />
                   )}
 
+                  {/* Plant Health & Pest Alert Badge */}
+                  {obj.healthStatus && obj.healthStatus !== 'healthy' && (
+                    <g pointerEvents="none">
+                      <circle
+                        cx={14}
+                        cy={14}
+                        r="8"
+                        fill={obj.healthStatus === 'critical' ? '#ef4444' : '#f59e0b'}
+                        stroke="#ffffff"
+                        strokeWidth="1.5"
+                      />
+                      <text
+                        x={14}
+                        y={17.5}
+                        textAnchor="middle"
+                        fill="#ffffff"
+                        fontSize="10"
+                        fontWeight="bold"
+                      >
+                        !
+                      </text>
+                    </g>
+                  )}
+
                   {/* Drip Irrigation Lateral Lines & Emitters */}
                   {showIrrigationOverlay && obj.irrigationType === 'drip' && (
                     <g pointerEvents="none">
