@@ -21,6 +21,16 @@ export async function POST(req: Request) {
     const body: RequestBody = await req.json();
     const { plot, goal, mode = 'auto_arrange', existingObjects = [], userPrompt } = body;
 
+    if (!plot || typeof plot.widthM !== 'number' || typeof plot.depthM !== 'number' || plot.widthM <= 0 || plot.depthM <= 0) {
+      return NextResponse.json(
+        { error: 'INVALID_PLOT', message: 'Dimensi lahan tidak valid (harus angka positif).' },
+        { status: 400 }
+      );
+    }
+
+    // Limit prompt length to mitigate prompt injection / payload exhaustion
+    const sanitizedPrompt = typeof userPrompt === 'string' ? userPrompt.trim().slice(0, 1000) : undefined;
+
     // Secure server-side API Key retrieval
     const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 
@@ -31,8 +41,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const widthM = plot.widthM;
-    const depthM = plot.depthM;
+    const widthM = Math.min(100, Math.max(1, plot.widthM));
+    const depthM = Math.min(100, Math.max(1, plot.depthM));
     const areaM2 = widthM * depthM;
     const isAutoArrange = mode === 'auto_arrange' && existingObjects.length > 0;
 
@@ -103,7 +113,7 @@ Anda adalah agronomist dan arsitek lanskap kebun pangan AgriSensa.
 Rancang denah kebun sayur presisi:
 - Dimensi Lahan: ${widthM}m x ${depthM}m (Luas: ${areaM2} m²)
 - Tujuan: ${goal === 'market' ? 'Komersial / Pasar' : 'Konsumsi Keluarga'}
-${userPrompt ? `- Instruksi Khusus Pengguna: "${userPrompt.slice(0, 300)}"` : ''}
+${sanitizedPrompt ? `- Instruksi Khusus Pengguna: "${sanitizedPrompt}"` : ''}
 
 KEMBALIKAN HANYA JSON MURNI:
 {
@@ -124,8 +134,18 @@ KEMBALIKAN HANYA JSON MURNI:
     });
 
     const text = response.text || '';
-    const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
-    const parsed = JSON.parse(cleanJson);
+    const cleanJson = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+    let parsed: any;
+    try {
+      parsed = JSON.parse(cleanJson);
+    } catch {
+      const match = cleanJson.match(/\{[\s\S]*\}/);
+      if (match) {
+        parsed = JSON.parse(match[0]);
+      } else {
+        throw new Error('Respons AI tidak dapat diurai ke dalam format JSON');
+      }
+    }
 
     return NextResponse.json(parsed);
   } catch (error) {

@@ -119,6 +119,14 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { imageBase64, modelType = 'cabai_pest', samplePreset } = body;
 
+    // Guard against memory exhaustion with oversized image payloads
+    if (imageBase64 && typeof imageBase64 === 'string' && imageBase64.length > 10 * 1024 * 1024) {
+      return NextResponse.json(
+        { error: 'PAYLOAD_TOO_LARGE', message: 'Ukuran payload gambar melebihi batas 10MB.' },
+        { status: 413 }
+      );
+    }
+
     const roboflowKey = process.env.ROBOFLOW_API_KEY;
 
     let predictions: VisionPrediction[] = [];

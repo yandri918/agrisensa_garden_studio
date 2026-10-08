@@ -155,11 +155,43 @@ function Object3DMesh({ obj, isSelected }: { obj: GardenObject; isSelected: bool
         </mesh>
       )}
 
-      {/* 5. Generic / Default Mesh for other facilities */}
+      {/* 5. IoT Soil Telemetry Probe */}
+      {objType === 'iot_sensor' && (
+        <group position={[0, 0, 0]}>
+          {/* Ground spike */}
+          <mesh position={[0, 0.15, 0]}>
+            <cylinderGeometry args={[0.015, 0.015, 0.3, 12]} />
+            <meshStandardMaterial color="#64748b" metalness={0.8} roughness={0.2} />
+          </mesh>
+          {/* Main Sensor Enclosure Unit */}
+          <mesh position={[0, 0.35, 0]}>
+            <cylinderGeometry args={[0.05, 0.05, 0.15, 16]} />
+            <meshStandardMaterial color="#0f172a" roughness={0.3} />
+          </mesh>
+          {/* Top Solar Cap / Antenna */}
+          <mesh position={[0, 0.44, 0]}>
+            <cylinderGeometry args={[0.065, 0.065, 0.02, 16]} />
+            <meshStandardMaterial color="#06b6d4" roughness={0.2} metalness={0.5} />
+          </mesh>
+          {/* Glowing Telemetry LED Indicator */}
+          <mesh position={[0, 0.37, 0.052]}>
+            <sphereGeometry args={[0.01, 8, 8]} />
+            <meshBasicMaterial color="#22d3ee" />
+          </mesh>
+          {/* Telemetry Sensing Zone Ground Ring */}
+          <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <ringGeometry args={[0.15, 0.35, 24]} />
+            <meshBasicMaterial color="#06b6d4" transparent opacity={0.2} side={THREE.DoubleSide} />
+          </mesh>
+        </group>
+      )}
+
+      {/* 6. Generic / Default Mesh for other facilities */}
       {objType !== 'raised_bed' &&
         objType !== 'hydroponic' &&
         objType !== 'pond' &&
-        objType !== 'path' && (
+        objType !== 'path' &&
+        objType !== 'iot_sensor' && (
           <mesh position={[0, h / 2, 0]}>
             <boxGeometry args={[w, h, d]} />
             <meshStandardMaterial color={color} roughness={0.6} />
