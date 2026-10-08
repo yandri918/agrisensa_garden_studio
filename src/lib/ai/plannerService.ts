@@ -40,7 +40,68 @@ export async function generateAIGardenPlan(req: AIPlanRequest): Promise<AIPlanRe
   // Check if we should auto-arrange existing components or build from scratch
   const isAutoArrange = mode === 'auto_arrange' && existingObjects.length > 0;
 
-  // ── 1. Call Google Gemini 2.5 Flash if API Key available ──
+  // ── 1. First try secure server-side endpoint ──
+  try {
+    const apiRes = await fetch('/api/ai/plan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plot, goal, mode, existingObjects, userPrompt }),
+    });
+
+    if (apiRes.ok) {
+      const parsed = await apiRes.json();
+      if (isAutoArrange && Array.isArray(parsed.arranged)) {
+        const arrangementMap = new Map<string, { x: number; y: number; rotationDeg?: number; irrigationType?: string; sprinklerRadiusM?: number }>();
+        for (const item of parsed.arranged) {
+          if (item.id) arrangementMap.set(item.id, item);
+        }
+
+        const updatedObjects = existingObjects.map(obj => {
+          if (obj.locked || obj.isLocked) return obj;
+          const match = arrangementMap.get(obj.id);
+          if (!match) return obj;
+
+          const newX = Math.max(0.2, Math.min(widthM - obj.size.widthM - 0.2, match.x));
+          const newY = Math.max(0.2, Math.min(depthM - obj.size.depthM - 0.2, match.y));
+
+          return {
+            ...obj,
+            position: { x: Math.round(newX * 100) / 100, y: Math.round(newY * 100) / 100, z: Math.round(newY * 100) / 100 },
+            rotationDeg: (match.rotationDeg === 90 ? 90 : 0) as RotationDeg,
+            irrigationType: (match.irrigationType as any) || obj.irrigationType || 'drip',
+            sprinklerRadiusM: match.sprinklerRadiusM || obj.sprinklerRadiusM || 2.0,
+          };
+        });
+
+        const collisionFreeObjects = resolveCollisionsGreedy(updatedObjects, plot);
+
+        return {
+          suggestedObjects: collisionFreeObjects,
+          explanation: parsed.explanation || 'Komponen pilihan Anda telah ditata ulang oleh Gemini AI dengan prinsip sirkulasi cahaya dan efisiensi air.',
+          weeklyAdvice: parsed.weeklyAdvice || [
+            'Minggu 1: Pembenahan instalasi bedengan dan koneksi titik air.',
+            'Minggu 2: Pindah tanam bibit varietas utama ke posisi yang ditentukan.',
+          ],
+          provider: 'gemini',
+        };
+      }
+
+      const generated = generateProceduralLayout(plot, goal);
+      return {
+        suggestedObjects: generated,
+        explanation: parsed.explanation || 'Tata letak kebun baru dioptimalkan oleh Google Gemini untuk efisiensi agronomis.',
+        weeklyAdvice: parsed.weeklyAdvice || [
+          'Minggu 1: Pembenahan media tanam organik dan pengecekan aliran air.',
+          'Minggu 2: Pindah tanam bibit sayuran daun ke bedengan utama.',
+        ],
+        provider: 'gemini',
+      };
+    }
+  } catch {
+    // Proceed to fallback
+  }
+
+  // ── 2. Call Google Gemini 2.5 Flash direct if API Key available (Client Fallback) ──
   if (apiKey && apiKey.trim().length > 0) {
     try {
       const ai = new GoogleGenAI({ apiKey: apiKey.trim() });

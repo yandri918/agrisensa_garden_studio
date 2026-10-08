@@ -18,6 +18,22 @@ import {
   FileJson,
   X,
 } from 'lucide-react';
+import { z } from 'zod';
+
+const ImportGardenSchema = z.object({
+  name: z.string().optional(),
+  plot: z.object({
+    widthM: z.number().positive(),
+    depthM: z.number().positive(),
+  }),
+  objects: z.array(
+    z.object({
+      id: z.string(),
+      position: z.object({ x: z.number() }),
+      size: z.object({ widthM: z.number(), depthM: z.number() }),
+    })
+  ),
+});
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -56,14 +72,15 @@ export function ExportModal({ isOpen, onClose }: ExportModalProps) {
   const handleImport = () => {
     try {
       const parsed = JSON.parse(importText);
-      if (parsed.plot && parsed.objects) {
-        loadGarden(parsed);
-        onClose();
-      } else {
-        alert('Format JSON tidak valid untuk AgriSensa Garden Studio.');
+      const validation = ImportGardenSchema.safeParse(parsed);
+      if (!validation.success) {
+        alert('Format file JSON tidak aman atau tidak sesuai spesifikasi blueprint AgriSensa.');
+        return;
       }
+      loadGarden(parsed);
+      onClose();
     } catch {
-      alert('Gagal membaca JSON. Pastikan format teks sudah benar.');
+      alert('Gagal membaca JSON. Pastikan sintaks file JSON valid.');
     }
   };
 
