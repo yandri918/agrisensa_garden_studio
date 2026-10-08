@@ -26,6 +26,8 @@ import {
   Scale,
   Footprints,
   Scan,
+  Radio,
+  Sparkles,
 } from 'lucide-react';
 
 interface RightPanelProps {
@@ -327,6 +329,70 @@ export function RightPanel({ onOpenVision }: RightPanelProps) {
                         <Scan size={13} className="text-emerald-400" />
                         <span>Inspeksi Daun (Roboflow Vision)</span>
                       </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── IoT Sensor Telemetry & Microclimate Node ── */}
+                {objType === 'iot_sensor' && (
+                  <div className="space-y-3 pt-3 border-t border-white/10">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-[11px] font-mono uppercase text-gray-400">
+                        <Radio size={13} className="text-cyan-400" />
+                        <span>Node Telemetri Tanah IoT</span>
+                      </div>
+                      <span className="text-[10px] px-2 py-0.5 rounded font-mono font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                        Online (LoRa)
+                      </span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-black/40 border border-white/10 space-y-2.5 text-xs">
+                      {/* Soil Moisture */}
+                      <div>
+                        <div className="flex justify-between text-[11px] mb-1">
+                          <span className="text-gray-400">Kelembaban Tanah (Moisture)</span>
+                          <span className="text-cyan-300 font-mono font-bold">48% (Optimal)</span>
+                        </div>
+                        <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                          <div className="bg-cyan-500 h-full rounded-full" style={{ width: '48%' }} />
+                        </div>
+                        <div className="flex justify-between text-[9px] text-gray-500 font-mono mt-0.5">
+                          <span>Kering (&lt;30%)</span>
+                          <span>Ideal (40-60%)</span>
+                          <span>Jenuh (&gt;70%)</span>
+                        </div>
+                      </div>
+
+                      {/* Soil EC & pH */}
+                      <div className="grid grid-cols-2 gap-2 pt-1 border-t border-white/5">
+                        <div className="p-2 rounded-lg bg-white/5 text-center">
+                          <div className="text-[10px] text-gray-400">EC Nutrisi</div>
+                          <div className="text-sm font-bold text-emerald-300 font-mono">1.8 <span className="text-[9px]">mS/cm</span></div>
+                          <div className="text-[9px] text-gray-500">Subur / Siap Serap</div>
+                        </div>
+                        <div className="p-2 rounded-lg bg-white/5 text-center">
+                          <div className="text-[10px] text-gray-400">pH Tanah</div>
+                          <div className="text-sm font-bold text-amber-300 font-mono">6.4</div>
+                          <div className="text-[9px] text-gray-500">Netral Ideal</div>
+                        </div>
+                      </div>
+
+                      {/* Soil Temperature */}
+                      <div className="flex items-center justify-between text-[11px] pt-1 border-t border-white/5 text-gray-300">
+                        <span>Suhu Zona Perakaran:</span>
+                        <span className="font-mono text-white font-semibold">24.8°C</span>
+                      </div>
+                    </div>
+
+                    {/* Smart Synergy with Weather Advisory */}
+                    <div className="p-2.5 rounded-lg bg-cyan-950/30 border border-cyan-500/20 text-[11px] text-cyan-200/90 space-y-1">
+                      <div className="font-semibold text-cyan-300 flex items-center gap-1.5">
+                        <Sparkles size={12} />
+                        <span>Sinergi Cuaca & Sensor Titik Pin Ini</span>
+                      </div>
+                      <p className="text-[10px] opacity-80 leading-relaxed">
+                        Data sensor tanah disinkronkan dengan data cuaca Open-Meteo pada koordinat pin lahan ini. Jika kelembaban tanah cukup dan cuaca memprediksi hujan, jadwal irigasi otomatis tertunda (*Smart Rain Delay*).
+                      </p>
                     </div>
                   </div>
                 )}

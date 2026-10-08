@@ -17,6 +17,8 @@ import {
   CheckCircle2,
   ShieldAlert,
   Scan,
+  Navigation,
+  Search,
 } from 'lucide-react';
 
 interface CityOption {
@@ -44,10 +46,70 @@ export function WeatherWidget({ onOpenVisionScanner }: WeatherWidgetProps) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [appliedAdviceFeedback, setAppliedAdviceFeedback] = useState<string | null>(null);
 
+  // Search state
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchResults, setSearchResults] = useState<CityOption[]>([]);
+  const [isSearching, setIsSearching] = useState<boolean>(false);
+  const [showSearchInput, setShowSearchInput] = useState<boolean>(false);
+
   const popoverRef = useRef<HTMLDivElement | null>(null);
 
   const garden = useGardenStore(state => state.garden);
   const updateObject = useGardenStore(state => state.updateObject);
+
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation tidak didukung oleh browser Anda.');
+      return;
+    }
+    setIsLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const newCity: CityOption = {
+          name: `Titik GPS (${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)})`,
+          lat: Math.round(pos.coords.latitude * 10000) / 10000,
+          lng: Math.round(pos.coords.longitude * 10000) / 10000,
+        };
+        setSelectedCity(newCity);
+        setShowSearchInput(false);
+      },
+      err => {
+        console.warn('Geolocation error:', err);
+        setIsLoading(false);
+        alert('Gagal membaca GPS. Pastikan izin akses lokasi telah diizinkan.');
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
+  const handleSearchLocations = async (query: string) => {
+    setSearchQuery(query);
+    if (!query || query.trim().length < 3) {
+      setSearchResults([]);
+      return;
+    }
+    setIsSearching(true);
+    try {
+      const res = await fetch(
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=5&language=id`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.results)) {
+          const mapped: CityOption[] = data.results.map((r: any) => ({
+            name: `${r.name}, ${r.admin1 || r.country || ''}`,
+            lat: Math.round(r.latitude * 10000) / 10000,
+            lng: Math.round(r.longitude * 10000) / 10000,
+          }));
+          setSearchResults(mapped);
+        }
+      }
+    } catch (err) {
+      console.warn('Search geocoding error:', err);
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   const fetchWeather = async (city: CityOption) => {
     setIsLoading(true);
@@ -153,34 +215,99 @@ export function WeatherWidget({ onOpenVisionScanner }: WeatherWidgetProps) {
       {/* Popover Dropdown Panel */}
       {isOpen && (
         <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl bg-slate-900/95 backdrop-blur-xl border border-white/15 p-4 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150 space-y-3.5">
-          {/* Location Bar & Refresh */}
-          <div className="flex items-center justify-between pb-2.5 border-b border-white/10">
-            <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-semibold">
-              <MapPin size={14} />
-              <select
-                value={selectedCity.name}
-                onChange={e => {
-                  const found = CITY_OPTIONS.find(c => c.name === e.target.value);
-                  if (found) setSelectedCity(found);
-                }}
-                className="bg-transparent text-white font-medium text-xs focus:outline-none cursor-pointer"
-              >
-                {CITY_OPTIONS.map(c => (
-                  <option key={c.name} value={c.name} className="bg-slate-900 text-white">
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+          {/* Location Bar with GPS & Search */}
+          <div className="space-y-2 pb-2.5 border-b border-white/10">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-semibold truncate max-w-[200px]">
+                <MapPin size={14} className="shrink-0" />
+                <span className="truncate">{selectedCity.name}</span>
+              </div>
+
+              <div className="flex items-center gap-1">
+                {/* 1-Click GPS Button */}
+                <button
+                  type="button"
+                  onClick={handleUseCurrentLocation}
+                  className="px-2 py-1 rounded bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-[10px] text-emerald-300 font-semibold flex items-center gap-1 transition-colors"
+                  title="Deteksi Lokasi GPS Saya Saat Ini"
+                >
+                  <Navigation size={11} />
+                  <span>GPS</span>
+                </button>
+
+                {/* Toggle Search Bar */}
+                <button
+                  type="button"
+                  onClick={() => setShowSearchInput(!showSearchInput)}
+                  className={`p-1 rounded text-gray-400 hover:text-white transition-colors ${
+                    showSearchInput ? 'bg-white/15 text-white' : 'bg-white/5 hover:bg-white/10'
+                  }`}
+                  title="Cari Kota / Titik Pin Lain"
+                >
+                  <Search size={13} />
+                </button>
+
+                {/* Refresh Weather */}
+                <button
+                  onClick={() => fetchWeather(selectedCity)}
+                  disabled={isLoading}
+                  className="p-1 rounded bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                  title="Perbarui Cuaca"
+                >
+                  <RefreshCw size={13} className={isLoading ? 'animate-spin' : ''} />
+                </button>
+              </div>
             </div>
 
-            <button
-              onClick={() => fetchWeather(selectedCity)}
-              disabled={isLoading}
-              className="p-1 rounded-md bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
-              title="Perbarui Cuaca"
-            >
-              <RefreshCw size={13} className={isLoading ? 'animate-spin' : ''} />
-            </button>
+            {/* Coordinates Pill */}
+            <div className="flex items-center justify-between text-[10px] text-gray-400 font-mono">
+              <span>Pin: {selectedCity.lat.toFixed(4)}, {selectedCity.lng.toFixed(4)}</span>
+              <span className="text-gray-500">Akurasi Mikroklimat</span>
+            </div>
+
+            {/* Interactive Search Input & Dropdown */}
+            {showSearchInput && (
+              <div className="pt-1.5 space-y-1.5 animate-in fade-in duration-150">
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={e => handleSearchLocations(e.target.value)}
+                    placeholder="Ketik nama kota, kecamatan (misal: Cianjur, Garut, Pacet)..."
+                    className="w-full bg-black/50 border border-emerald-500/40 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-400"
+                    autoFocus
+                  />
+                  {isSearching && (
+                    <div className="absolute right-2.5 top-2 text-[10px] text-gray-400 animate-pulse">
+                      Mencari...
+                    </div>
+                  )}
+                </div>
+
+                {searchResults.length > 0 && (
+                  <div className="max-h-36 overflow-y-auto rounded-lg bg-black/80 border border-white/10 divide-y divide-white/5">
+                    {searchResults.map((result, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          setSelectedCity(result);
+                          setShowSearchInput(false);
+                          setSearchResults([]);
+                          setSearchQuery('');
+                        }}
+                        className="w-full px-2.5 py-1.5 text-left text-xs text-gray-300 hover:text-white hover:bg-white/10 flex items-center justify-between transition-colors"
+                      >
+                        <span className="truncate">{result.name}</span>
+                        <span className="text-[10px] font-mono text-gray-500 shrink-0 ml-2">
+                          {result.lat.toFixed(2)}, {result.lng.toFixed(2)}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Current Microclimate Grid */}
