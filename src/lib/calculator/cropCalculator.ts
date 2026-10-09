@@ -10,7 +10,7 @@
  */
 
 import type { GardenObject } from '@/types/garden';
-import { VEGETABLE_CATALOG } from '@/data/vegetable-catalog';
+import { VEGETABLE_CATALOG, type VegetableEntry } from '@/data/vegetable-catalog';
 
 export interface CropYieldSummary {
   cropId: string;
@@ -72,8 +72,10 @@ const WATER_DEMAND_L_M2_DAY: Record<string, number> = {
 
 export function calculateGardenMetrics(
   objects: GardenObject[],
-  livePricesMap?: Record<string, number>
+  livePricesMap?: Record<string, number>,
+  customCrops?: VegetableEntry[]
 ): GardenProductionMetrics {
+  const allCrops = customCrops && customCrops.length > 0 ? [...VEGETABLE_CATALOG, ...customCrops] : VEGETABLE_CATALOG;
   const cropMap = new Map<string, CropYieldSummary>();
 
   let totalProductionArea = 0;
@@ -90,7 +92,7 @@ export function calculateGardenMetrics(
     totalProductionArea += areaM2;
 
     const cropId = obj.plantSpeciesId || 'pakcoy'; // default to pakcoy if unassigned
-    const crop = VEGETABLE_CATALOG.find(c => c.id === cropId) || VEGETABLE_CATALOG[1];
+    const crop = allCrops.find(c => c.id === cropId) || allCrops[1];
 
     let plantsInObj = 0;
     let yieldObjKg = 0;

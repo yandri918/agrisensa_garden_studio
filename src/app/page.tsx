@@ -15,6 +15,7 @@ import { GardenCanvas } from '@/components/canvas/GardenCanvas';
 import { AIAssistantModal } from '@/components/ai/AIAssistantModal';
 import { ExportModal } from '@/components/export/ExportModal';
 import { PlantScannerModal } from '@/components/vision/PlantScannerModal';
+import { SeedImporterModal } from '@/components/seed/SeedImporterModal';
 import { useGardenStore } from '@/store/gardenStore';
 
 // Client-only dynamic import for 3D Three.js scene
@@ -34,6 +35,7 @@ export default function Home() {
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isVisionModalOpen, setIsVisionModalOpen] = useState(false);
+  const [isSeedModalOpen, setIsSeedModalOpen] = useState(false);
 
   // Keyboard shortcuts (Undo, Redo, Delete, Deselect)
   useEffect(() => {
@@ -73,12 +75,13 @@ export default function Home() {
         onOpenAI={() => setIsAIModalOpen(true)}
         onOpenExport={() => setIsExportModalOpen(true)}
         onOpenVision={() => setIsVisionModalOpen(true)}
+        onOpenSeedImporter={() => setIsSeedModalOpen(true)}
       />
 
       {/* 2. Main Workspace (Left Palette + Center Canvas/3D + Right Inspector) */}
       <div className="flex-1 flex overflow-hidden relative">
         {/* Left: Component Catalog & Plot Settings */}
-        <ObjectPalette />
+        <ObjectPalette onOpenSeedImporter={() => setIsSeedModalOpen(true)} />
 
         {/* Center: Viewport (2D Blueprint or 3D Scene) */}
         <main className="flex-1 h-full relative overflow-hidden bg-slate-950">
@@ -104,6 +107,11 @@ export default function Home() {
         isOpen={isVisionModalOpen}
         onClose={() => setIsVisionModalOpen(false)}
         targetBedId={selectedObjectId}
+      />
+
+      <SeedImporterModal
+        isOpen={isSeedModalOpen}
+        onClose={() => setIsSeedModalOpen(false)}
       />
     </div>
   );

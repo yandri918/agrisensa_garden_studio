@@ -19,6 +19,7 @@ import {
   CheckCircle2,
   RotateCcw,
   Scan,
+  Sprout,
 } from 'lucide-react';
 import { WeatherWidget } from '@/components/weather/WeatherWidget';
 
@@ -26,9 +27,10 @@ interface HeaderProps {
   onOpenAI: () => void;
   onOpenExport: () => void;
   onOpenVision?: () => void;
+  onOpenSeedImporter?: () => void;
 }
 
-export function Header({ onOpenAI, onOpenExport, onOpenVision }: HeaderProps) {
+export function Header({ onOpenAI, onOpenExport, onOpenVision, onOpenSeedImporter }: HeaderProps) {
   const garden = useGardenStore(state => state.garden);
   const viewMode = useGardenStore(state => state.viewMode);
   const setViewMode = useGardenStore(state => state.setViewMode);
@@ -169,6 +171,18 @@ export function Header({ onOpenAI, onOpenExport, onOpenVision }: HeaderProps) {
           >
             <Scan size={14} className="text-emerald-400" />
             <span>AI Vision</span>
+          </button>
+        )}
+
+        {/* Paste-a-Seed Importer Modal Trigger */}
+        {onOpenSeedImporter && (
+          <button
+            onClick={onOpenSeedImporter}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 transition-all shadow-sm"
+            title="Paste-a-Seed: Impor Varietas Benih dari Web via Firecrawl + Gemini AI"
+          >
+            <Sprout size={14} className="text-amber-400" />
+            <span>Impor Benih</span>
           </button>
         )}
 

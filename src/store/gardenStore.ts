@@ -22,6 +22,7 @@ import type {
 import { createDefaultGarden } from '@/types/garden';
 import { validateLayout } from '@/lib/planner/validator';
 import type { MarketPriceItem, MarketPricesResponse } from '@/types/market';
+import type { VegetableEntry } from '@/data/vegetable-catalog';
 
 // ─── Store Shape ──────────────────────────────────────────────────────────────
 
@@ -91,6 +92,11 @@ interface GardenStore {
   marketError: string | null;
   toggleUseLivePrices: (enabled?: boolean) => void;
   fetchMarketPrices: (forceRefresh?: boolean) => Promise<void>;
+
+  // ── Custom Imported Crops (Paste-a-Seed) ──
+  customCrops: VegetableEntry[];
+  addCustomCrop: (crop: VegetableEntry) => void;
+  removeCustomCrop: (cropId: string) => void;
 }
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
@@ -126,6 +132,7 @@ export const useGardenStore = create<GardenStore>()(
       isSyncingMarket: false,
       useLivePrices: true,
       marketError: null,
+      customCrops: [],
       history: [],
       historyIndex: -1,
       canUndo: false,
@@ -369,12 +376,27 @@ export const useGardenStore = create<GardenStore>()(
           });
         }
       },
+
+      // ── Custom Crops (Paste-a-Seed) ───────────────────────────────────────
+
+      addCustomCrop(crop) {
+        set(state => {
+          const filtered = state.customCrops.filter(c => c.id !== crop.id);
+          return { customCrops: [crop, ...filtered] };
+        });
+      },
+
+      removeCustomCrop(cropId) {
+        set(state => ({
+          customCrops: state.customCrops.filter(c => c.id !== cropId),
+        }));
+      },
     }),
     {
       name: 'agrisensa-garden-studio',
       storage: createJSONStorage(() => localStorage),
-      // Only persist the garden state, not UI state like selection
-      partialize: (state) => ({ garden: state.garden }),
+      // Persist garden state & custom imported crops
+      partialize: (state) => ({ garden: state.garden, customCrops: state.customCrops }),
     }
   )
 );

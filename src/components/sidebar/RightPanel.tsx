@@ -73,6 +73,9 @@ export function RightPanel({ onOpenVision }: RightPanelProps) {
     return map;
   }, [useLivePrices, marketPrices]);
 
+  const customCrops = useGardenStore(state => state.customCrops);
+  const allCrops = useMemo(() => [...customCrops, ...VEGETABLE_CATALOG], [customCrops]);
+
   const selectedObj = garden.objects.find(o => o.id === selectedObjectId);
   const objType = selectedObj ? (selectedObj.type || selectedObj.facilityType || 'raised_bed') : null;
   const facility = objType ? FACILITY_CATALOG.find(f => f.type === objType) : null;
@@ -80,7 +83,10 @@ export function RightPanel({ onOpenVision }: RightPanelProps) {
   const posY = selectedObj ? (selectedObj.position.y ?? selectedObj.position.z ?? 0) : 0;
 
   // Real-time calculation of crop yield & production metrics
-  const metrics = useMemo(() => calculateGardenMetrics(garden.objects, livePriceMap), [garden.objects, livePriceMap]);
+  const metrics = useMemo(
+    () => calculateGardenMetrics(garden.objects, livePriceMap, customCrops),
+    [garden.objects, livePriceMap, customCrops]
+  );
 
   const conflicts = garden.validation.conflicts;
   const isValid = garden.validation.status === 'valid' || garden.validation.isValid;
@@ -294,9 +300,9 @@ export function RightPanel({ onOpenVision }: RightPanelProps) {
                       onChange={e => updateObject(selectedObj.id, { plantSpeciesId: e.target.value })}
                       className="w-full bg-black/40 border border-white/10 rounded px-2.5 py-1.5 text-xs text-white focus:border-emerald-500 focus:outline-none"
                     >
-                      {VEGETABLE_CATALOG.map(crop => (
+                      {allCrops.map(crop => (
                         <option key={crop.id} value={crop.id} className="bg-slate-900 text-white">
-                          {crop.nameId} ({crop.harvestDays} hari panen)
+                          {crop.nameId} ({crop.harvestDays} hari panen){crop.dataStatus === 'verified' && crop.source.includes('Impor') ? ' ★' : ''}
                         </option>
                       ))}
                     </select>
