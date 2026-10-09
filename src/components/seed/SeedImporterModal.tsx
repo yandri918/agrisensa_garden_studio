@@ -155,9 +155,9 @@ export function SeedImporterModal({ isOpen, onClose }: SeedImporterModalProps) {
             <div>
               <h2 className="text-sm font-bold text-white flex items-center gap-1.5">
                 <span>Paste-a-Seed: Smart Variety Importer</span>
-                <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
-                  <Flame size={10} />
-                  <span>Firecrawl + Gemini AI</span>
+                <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                  <Sparkles size={10} />
+                  <span>AgriSensa AI Engine</span>
                 </span>
               </h2>
               <p className="text-[11px] text-gray-400">
@@ -268,7 +268,7 @@ export function SeedImporterModal({ isOpen, onClose }: SeedImporterModalProps) {
             {isLoading ? (
               <>
                 <RefreshCw size={14} className="animate-spin text-white" />
-                <span>Mengekstrak via Firecrawl & Gemini AI...</span>
+                <span>Mengekstrak spesifikasi benih via AI...</span>
               </>
             ) : (
               <>
@@ -304,7 +304,7 @@ export function SeedImporterModal({ isOpen, onClose }: SeedImporterModalProps) {
                 </div>
               </div>
               <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-white/5 border border-white/10 text-gray-300">
-                {result.scrapedVia === 'firecrawl_live' ? 'Firecrawl Scraped' : 'AI Extracted'}
+                {result.scrapedVia === 'firecrawl_live' ? 'Web Extracted' : 'AI Extracted'}
               </span>
             </div>
 

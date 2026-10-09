@@ -187,7 +187,7 @@ export function Header({
           <button
             onClick={onOpenSeedImporter}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 transition-all shadow-sm"
-            title="Paste-a-Seed: Impor Varietas Benih dari Web via Firecrawl + Gemini AI"
+            title="Paste-a-Seed: Impor Varietas Benih dari Web"
           >
             <Sprout size={14} className="text-amber-400" />
             <span>Impor Benih</span>
@@ -199,7 +199,7 @@ export function Header({
           <button
             onClick={onOpenCopilot}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 transition-all shadow-sm group"
-            title="Agro-Knowledge RAG Co-Pilot: Konsultasi Pertanian Berbasis Firecrawl & Gemini AI"
+            title="Agro-Knowledge RAG Co-Pilot: Konsultasi Pertanian Cerdas Berbasis Riset & AI"
           >
             <Bot size={14} className="text-emerald-400 group-hover:scale-110 transition-transform" />
             <span>Agro Co-Pilot</span>

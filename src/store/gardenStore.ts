@@ -126,7 +126,7 @@ export const useGardenStore = create<GardenStore>()(
       isAILoading: false,
       aiError: null,
       marketPrices: {},
-      marketSource: 'Badan Pangan Nasional (Bapanas) & PIHPS via Firecrawl',
+      marketSource: 'Badan Pangan Nasional (Bapanas) & PIHPS',
       marketScrapedVia: 'none',
       marketLastSync: null,
       isSyncingMarket: false,

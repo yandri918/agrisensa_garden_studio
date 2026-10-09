@@ -103,7 +103,7 @@ export function AgroCopilotDrawer({ isOpen, onClose }: AgroCopilotDrawerProps) {
       role: 'assistant',
       content: `Selamat datang di **Agro-Knowledge Co-Pilot**! 
 
-Saya adalah asisten agronomis presisi Anda yang terintegrasi dengan **RAG (Firecrawl Live Web Retrieval & Riset Balitsa/BPTP)** dan **Google Gemini Flash**. Saya membaca kondisi riil kebun Anda secara langsung untuk memberikan rekomendasi pengendalian hama, nutrisi organik, dan teknik budidaya presisi.
+Saya adalah asisten agronomis presisi Anda yang terintegrasi dengan **RAG (Live Agro-Knowledge Retrieval & Riset Balitsa/BPTP)** dan **AI Engine**. Saya membaca kondisi riil kebun Anda secara langsung untuk memberikan rekomendasi pengendalian hama, nutrisi organik, dan teknik budidaya presisi.
 
 Silakan pilih topik cepat di atas atau ajukan pertanyaan spesifik tentang tanaman di kebun Anda.`,
       timestamp: 'Baru saja',
@@ -247,7 +247,7 @@ Silakan pilih topik cepat di atas atau ajukan pertanyaan spesifik tentang tanama
               </span>
             </div>
             <p className="text-[11px] text-gray-400">
-              Firecrawl Web Knowledge Retrieval + Gemini AI
+              Live Agro-Knowledge Retrieval & AI Co-Pilot
             </p>
           </div>
         </div>
@@ -393,7 +393,7 @@ Silakan pilih topik cepat di atas atau ajukan pertanyaan spesifik tentang tanama
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] uppercase font-mono font-semibold text-gray-400 flex items-center gap-1.5">
                       <BookOpen size={12} className="text-emerald-400" />
-                      Rujukan Riset Terverifikasi (Firecrawl RAG)
+                      Rujukan Riset Terverifikasi (Agro-RAG)
                     </span>
                     <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                       {m.citations.length} Sumber
@@ -494,7 +494,7 @@ Silakan pilih topik cepat di atas atau ajukan pertanyaan spesifik tentang tanama
             </div>
             <div className="p-3.5 rounded-2xl bg-slate-900 border border-white/10 text-xs text-gray-300 flex items-center gap-2.5 shadow-lg">
               <RefreshCw size={14} className="animate-spin text-emerald-400" />
-              <span>Menghubungkan ke Firecrawl Web RAG & menyusun saran agronomis...</span>
+              <span>Menghubungkan ke Agro Web RAG & menyusun saran agronomis...</span>
             </div>
           </div>
         )}
@@ -529,7 +529,7 @@ Silakan pilih topik cepat di atas atau ajukan pertanyaan spesifik tentang tanama
           </button>
         </form>
         <div className="flex items-center justify-between text-[10px] text-gray-500 mt-2 px-1 font-mono">
-          <span>Didukung Firecrawl Scraper & Google Gemini Flash</span>
+          <span>Didukung AgriSensa AI Engine & Agro-RAG</span>
           <span>Standar Riset Balitsa Kementan</span>
         </div>
       </div>

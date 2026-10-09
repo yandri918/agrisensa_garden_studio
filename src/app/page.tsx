@@ -95,7 +95,7 @@ export default function Home() {
           <button
             onClick={() => setIsCopilotOpen(true)}
             className="absolute bottom-5 right-5 z-20 flex items-center gap-2.5 px-3.5 py-2 rounded-full bg-slate-900/90 hover:bg-slate-800 text-emerald-300 border border-emerald-500/40 shadow-xl backdrop-blur-md text-xs font-semibold hover:border-emerald-400 transition-all group"
-            title="Tanya Agro-Knowledge Co-Pilot (Firecrawl RAG + Gemini AI)"
+            title="Tanya Agro-Knowledge Co-Pilot (Agro-RAG Cerdas)"
           >
             <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
               <Bot size={13} className="group-hover:rotate-12 transition-transform" />

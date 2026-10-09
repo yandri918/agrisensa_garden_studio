@@ -714,13 +714,13 @@ export function RightPanel({ onOpenVision, onOpenCopilot }: RightPanelProps) {
                       : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                   }`}>
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    {marketScrapedVia === 'firecrawl_live' ? 'Firecrawl Live' : 'Bapanas Index'}
+                    {marketScrapedVia === 'firecrawl_live' ? 'Live Market' : 'Bapanas Index'}
                   </span>
                   <button
                     onClick={() => fetchMarketPrices(true)}
                     disabled={isSyncingMarket}
                     className="p-1 rounded bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white transition-colors disabled:opacity-50"
-                    title="Sinkronisasi harga pasar dengan Firecrawl"
+                    title="Sinkronisasi harga pasar real-time"
                   >
                     <RefreshCw size={12} className={isSyncingMarket ? 'animate-spin text-amber-400' : ''} />
                   </button>
