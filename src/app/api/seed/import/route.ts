@@ -6,6 +6,7 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 import type { VegetableEntry } from '@/data/vegetable-catalog';
+import { scraperProvider } from '@/lib/providers';
 
 interface ImportRequestBody {
   url?: string;
@@ -93,39 +94,16 @@ export async function POST(req: Request) {
         sourceUrl = PRESET_SEED_SAMPLES.cabai_shypoon.url;
         scrapedVia = 'preset_fallback';
       } else {
-        // Attempt real-time scraping via Firecrawl
-        const firecrawlApiKey = process.env.FIRECRAWL_API_KEY;
-
-        if (firecrawlApiKey) {
-          try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 12000); // 12-second timeout
-
-            const firecrawlRes = await fetch('https://api.firecrawl.dev/v1/scrape', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${firecrawlApiKey}`,
-              },
-              body: JSON.stringify({
-                url: url.trim(),
-                formats: ['markdown'],
-              }),
-              signal: controller.signal,
-            });
-
-            clearTimeout(timeoutId);
-
-            if (firecrawlRes.ok) {
-              const scrapeResult = await firecrawlRes.json();
-              scrapedMarkdown = scrapeResult?.data?.markdown || '';
-              if (scrapedMarkdown.length > 50) {
-                scrapedVia = 'firecrawl_live';
-              }
-            }
-          } catch (err) {
-            console.warn('Firecrawl scrape error, fallback to content analysis:', err);
+        // Attempt real-time scraping via Scraper Provider Abstraction Layer (Tavily, Exa, BrightData, Native)
+        try {
+          const scraped = await scraperProvider.scrape(url.trim(), { timeoutMs: 12000 });
+          const content = scraped.markdown || scraped.text || '';
+          if (content.length > 50) {
+            scrapedMarkdown = content;
+            scrapedVia = 'firecrawl_live';
           }
+        } catch (err) {
+          console.warn('Scraper provider error, fallback to content analysis:', err);
         }
       }
     }

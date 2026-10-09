@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { MarketPriceItem, MarketPricesResponse } from '@/types/market';
+import { scraperProvider } from '@/lib/providers';
 
 interface CacheEntry {
   data: MarketPricesResponse;
@@ -151,38 +152,15 @@ export async function GET(req: Request) {
       return NextResponse.json(memoryCache.data);
     }
 
-    const firecrawlApiKey = process.env.FIRECRAWL_API_KEY;
-
-    if (!firecrawlApiKey) {
-      const benchmarkData = generateBenchmarkPayload(nowIso);
-      memoryCache = { data: benchmarkData, timestamp: now };
-      return NextResponse.json(benchmarkData);
-    }
-
-    // Attempt live scraping via Firecrawl with 6-second timeout
+    // Attempt live scraping via Scraper Provider Abstraction Layer (Tavily, Exa, BrightData, Native)
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 6000);
-
-      const firecrawlRes = await fetch('https://api.firecrawl.dev/v1/scrape', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${firecrawlApiKey}`,
-        },
-        body: JSON.stringify({
-          url: 'https://panelharga.badanpangan.go.id/',
-          formats: ['markdown'],
-        }),
-        signal: controller.signal,
+      const scraped = await scraperProvider.scrape('https://panelharga.badanpangan.go.id/', {
+        timeoutMs: 7000,
       });
 
-      clearTimeout(timeoutId);
+      const markdown = scraped?.markdown || scraped?.text || '';
 
-      if (firecrawlRes.ok) {
-        const scrapeResult = await firecrawlRes.json();
-        const markdown = scrapeResult?.data?.markdown || '';
-
+      if (markdown && markdown.length > 50) {
         // Generate response with live status tag
         const benchmarkData = generateBenchmarkPayload(nowIso);
         
@@ -216,13 +194,13 @@ export async function GET(req: Request) {
         }
 
         benchmarkData.scrapedVia = 'firecrawl_live';
-        benchmarkData.source = 'Firecrawl Live Scraper (Panel Harga Pangan & PIHPS)';
+        benchmarkData.source = 'Live Market Index (Panel Harga Pangan & PIHPS)';
         
         memoryCache = { data: benchmarkData, timestamp: now };
         return NextResponse.json(benchmarkData);
       }
     } catch {
-      // If Firecrawl aborts or upstream target is slow, proceed with calibrated regional benchmark
+      // If live scraping fails or times out, proceed with calibrated regional benchmark
     }
 
     const fallbackData = generateBenchmarkPayload(nowIso);

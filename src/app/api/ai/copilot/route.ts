@@ -10,6 +10,7 @@
 
 import { NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
+import { searchProvider } from '@/lib/providers';
 
 interface CropContext {
   id: string;
@@ -104,48 +105,29 @@ export async function POST(req: Request) {
     }
 
     const query = message.trim();
-    const firecrawlApiKey = process.env.FIRECRAWL_API_KEY;
     const citations: RagCitation[] = [];
 
-    // ── 1. Live Web Retrieval via Firecrawl Search API ──
-    if (firecrawlApiKey) {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5500); // 5.5s timeout
+    // ── 1. Live Web Retrieval via Search Provider Abstraction Layer (Tavily, Exa, Native) ──
+    try {
+      const searchRes = await searchProvider.search(
+        `${query} pertanian sayuran hortikultura balitsa kementan`,
+        { maxResults: 3, timeoutMs: 6000 }
+      );
 
-        const searchRes = await fetch('https://api.firecrawl.dev/v1/search', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${firecrawlApiKey}`,
-          },
-          body: JSON.stringify({
-            query: `${query} pertanian sayuran hortikultura balitsa kementan`,
-            limit: 3,
-          }),
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        if (searchRes.ok) {
-          const searchJson = await searchRes.json();
-          if (Array.isArray(searchJson?.data)) {
-            for (const item of searchJson.data.slice(0, 3)) {
-              if (item.url) {
-                citations.push({
-                  title: item.title || 'Publikasi Agronomi & Riset Tanaman',
-                  url: item.url,
-                  snippet: (item.description || item.content || '').slice(0, 250),
-                  sourceType: 'firecrawl_live',
-                });
-              }
-            }
+      if (searchRes && Array.isArray(searchRes.results)) {
+        for (const item of searchRes.results.slice(0, 3)) {
+          if (item.url) {
+            citations.push({
+              title: item.title || 'Publikasi Agronomi & Riset Tanaman',
+              url: item.url,
+              snippet: (item.content || '').slice(0, 250),
+              sourceType: 'firecrawl_live',
+            });
           }
         }
-      } catch (err) {
-        console.warn('Firecrawl Search RAG timeout or error, falling back to curated knowledge:', err);
       }
+    } catch (err) {
+      console.warn('Search Provider RAG timeout or error, falling back to curated knowledge:', err);
     }
 
     // ── 2. Curated RAG Knowledge Ingestion ──
