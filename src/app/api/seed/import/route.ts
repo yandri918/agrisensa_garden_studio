@@ -206,19 +206,13 @@ KEMBALIKAN HANYA JSON MURNI TANPA CODEBLOCK MARKDOWN:
           const response = await ai.models.generateContent({
             model: modelName,
             contents: prompt,
+            config: {
+              responseMimeType: 'application/json',
+            },
           });
 
           const text = response.text || '';
-          const cleanJson = text.replace(/```json/gi, '').replace(/```/g, '').trim();
-
-          try {
-            parsed = JSON.parse(cleanJson);
-          } catch {
-            const match = cleanJson.match(/\{[\s\S]*\}/);
-            if (match) {
-              parsed = JSON.parse(match[0]);
-            }
-          }
+          parsed = parseJsonSafely(text);
 
           if (parsed && parsed.crop && parsed.crop.nameId) {
             successfulModel = modelName;
@@ -227,7 +221,7 @@ KEMBALIKAN HANYA JSON MURNI TANPA CODEBLOCK MARKDOWN:
         } catch (genErr) {
           console.warn(`Model ${modelName} failed or unavailable:`, genErr);
           // Wait briefly before trying fallback model
-          await new Promise((resolve) => setTimeout(resolve, 800));
+          await new Promise((resolve) => setTimeout(resolve, 600));
         }
       }
     }
@@ -337,3 +331,29 @@ function extractHeuristicCrop(content: string, sourceUrl: string): VegetableEntr
     dataStatus: 'verified',
   };
 }
+
+function parseJsonSafely(raw: string): any {
+  if (!raw || typeof raw !== 'string') return null;
+
+  let cleaned = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
+  // Strip comments (e.g. // comment)
+  cleaned = cleaned.replace(/\/\/.*$/gm, '');
+  // Strip trailing commas before } or ]
+  cleaned = cleaned.replace(/,\s*([}\]])/g, '$1');
+
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    const match = cleaned.match(/\{[\s\S]*\}/);
+    if (match) {
+      try {
+        let snippet = match[0].replace(/,\s*([}\]])/g, '$1');
+        return JSON.parse(snippet);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }
+}
+
