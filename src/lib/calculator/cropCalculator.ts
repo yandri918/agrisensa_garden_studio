@@ -24,6 +24,10 @@ export interface CropYieldSummary {
   harvestDays: number;
   estimatedValueIdr: number;
   waterDemandLitersPerDay: number;
+  pricePerKg: number;
+  baselinePricePerKg: number;
+  deltaPct: number;
+  isLivePrice: boolean;
 }
 
 export interface IrrigationSummary {
@@ -39,7 +43,10 @@ export interface GardenProductionMetrics {
   totalProductionAreaM2: number;
   totalPlantCapacity: number;
   totalYieldPerMonthKg: number;
-  totalEstimatedMonthlyRevenueIdr: number; // Nilai Produksi Bruto
+  totalEstimatedMonthlyRevenueIdr: number; // Nilai Produksi Bruto (Live/Dynamic)
+  baselineMonthlyRevenueIdr: number; // Nilai Produksi Berdasarkan Baseline Standar
+  revenueDeltaPct: number; // Selisih % pertumbuhan nilai panen
+  isLivePricesActive: boolean;
   estimatedMonthlyOpexIdr: number; // Estimasi Biaya Operasional (benih, pupuk/nutrisi, air ~30%)
   estimatedMonthlyNetProfitIdr: number; // Estimasi Margin Bersih Bulanan
   dailyWaterRequirementLiters: number;
@@ -47,7 +54,7 @@ export interface GardenProductionMetrics {
   breakdown: CropYieldSummary[];
 }
 
-// Approximate price per kg in IDR based on market value category
+// Approximate baseline price per kg in IDR based on market value category
 const PRICE_MAP_IDR: Record<string, number> = {
   low: 12000,
   medium: 22000,
@@ -63,10 +70,14 @@ const WATER_DEMAND_L_M2_DAY: Record<string, number> = {
   herb: 3.0,
 };
 
-export function calculateGardenMetrics(objects: GardenObject[]): GardenProductionMetrics {
+export function calculateGardenMetrics(
+  objects: GardenObject[],
+  livePricesMap?: Record<string, number>
+): GardenProductionMetrics {
   const cropMap = new Map<string, CropYieldSummary>();
 
   let totalProductionArea = 0;
+  let totalBaselineRevenue = 0;
 
   for (const obj of objects) {
     const objType = obj.type || obj.facilityType;
@@ -99,8 +110,14 @@ export function calculateGardenMetrics(objects: GardenObject[]): GardenProductio
     const cyclesPerMonth = 30 / Math.max(crop.harvestDays, 1);
     const monthlyKg = yieldObjKg * cyclesPerMonth;
 
-    const pricePerKg = PRICE_MAP_IDR[crop.marketValue] || 25000;
+    const baselinePricePerKg = PRICE_MAP_IDR[crop.marketValue] || 25000;
+    const hasLivePrice = Boolean(livePricesMap && livePricesMap[crop.id]);
+    const pricePerKg = hasLivePrice ? (livePricesMap![crop.id] || baselinePricePerKg) : baselinePricePerKg;
+    const deltaPct = Math.round(((pricePerKg - baselinePricePerKg) / baselinePricePerKg) * 1000) / 10;
+
     const monthlyRev = monthlyKg * pricePerKg;
+    const monthlyBaselineRev = monthlyKg * baselinePricePerKg;
+    totalBaselineRevenue += monthlyBaselineRev;
 
     const waterRate = WATER_DEMAND_L_M2_DAY[crop.type] || 4.5;
     const dailyWaterL = areaM2 * waterRate;
@@ -127,6 +144,10 @@ export function calculateGardenMetrics(objects: GardenObject[]): GardenProductio
         harvestDays: crop.harvestDays,
         estimatedValueIdr: Math.round(monthlyRev),
         waterDemandLitersPerDay: Math.round(dailyWaterL * 10) / 10,
+        pricePerKg,
+        baselinePricePerKg,
+        deltaPct,
+        isLivePrice: hasLivePrice,
       });
     }
   }
@@ -135,6 +156,11 @@ export function calculateGardenMetrics(objects: GardenObject[]): GardenProductio
   const totalPlantCapacity = breakdown.reduce((sum, item) => sum + item.plantCount, 0);
   const totalYieldPerMonthKg = Math.round(breakdown.reduce((sum, item) => sum + item.monthlyYieldKg, 0) * 10) / 10;
   const totalEstimatedMonthlyRevenueIdr = breakdown.reduce((sum, item) => sum + item.estimatedValueIdr, 0);
+  const baselineMonthlyRevenueIdr = Math.round(totalBaselineRevenue);
+  const revenueDeltaPct = baselineMonthlyRevenueIdr > 0
+    ? Math.round(((totalEstimatedMonthlyRevenueIdr - baselineMonthlyRevenueIdr) / baselineMonthlyRevenueIdr) * 1000) / 10
+    : 0;
+
   const estimatedMonthlyOpexIdr = Math.round(totalEstimatedMonthlyRevenueIdr * 0.30); // Estimasi 30% OPEX (benih, pupuk/nutrisi, listrik pompa)
   const estimatedMonthlyNetProfitIdr = Math.max(0, totalEstimatedMonthlyRevenueIdr - estimatedMonthlyOpexIdr);
   const dailyWaterRequirementLiters = Math.round(breakdown.reduce((sum, item) => sum + item.waterDemandLitersPerDay, 0) * 10) / 10;
@@ -167,6 +193,9 @@ export function calculateGardenMetrics(objects: GardenObject[]): GardenProductio
     totalPlantCapacity,
     totalYieldPerMonthKg,
     totalEstimatedMonthlyRevenueIdr,
+    baselineMonthlyRevenueIdr,
+    revenueDeltaPct,
+    isLivePricesActive: Boolean(livePricesMap && Object.keys(livePricesMap).length > 0),
     estimatedMonthlyOpexIdr,
     estimatedMonthlyNetProfitIdr,
     dailyWaterRequirementLiters,

@@ -21,6 +21,7 @@ import type {
 } from '@/types/garden';
 import { createDefaultGarden } from '@/types/garden';
 import { validateLayout } from '@/lib/planner/validator';
+import type { MarketPriceItem, MarketPricesResponse } from '@/types/market';
 
 // ─── Store Shape ──────────────────────────────────────────────────────────────
 
@@ -79,6 +80,17 @@ interface GardenStore {
   // ── AI ──
   setAILoading: (loading: boolean) => void;
   setAIError: (error: string | null) => void;
+
+  // ── Market Intelligence (Firecrawl) ──
+  marketPrices: Record<string, MarketPriceItem>;
+  marketSource: string;
+  marketScrapedVia: 'firecrawl_live' | 'bapanas_benchmark_cache' | 'none';
+  marketLastSync: string | null;
+  isSyncingMarket: boolean;
+  useLivePrices: boolean;
+  marketError: string | null;
+  toggleUseLivePrices: (enabled?: boolean) => void;
+  fetchMarketPrices: (forceRefresh?: boolean) => Promise<void>;
 }
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
@@ -107,6 +119,13 @@ export const useGardenStore = create<GardenStore>()(
       viewMode: '2d',
       isAILoading: false,
       aiError: null,
+      marketPrices: {},
+      marketSource: 'Badan Pangan Nasional (Bapanas) & PIHPS via Firecrawl',
+      marketScrapedVia: 'none',
+      marketLastSync: null,
+      isSyncingMarket: false,
+      useLivePrices: true,
+      marketError: null,
       history: [],
       historyIndex: -1,
       canUndo: false,
@@ -322,6 +341,33 @@ export const useGardenStore = create<GardenStore>()(
 
       setAIError(error) {
         set({ isAILoading: false, aiError: error });
+      },
+
+      // ── Market Intelligence (Firecrawl) ───────────────────────────────────
+
+      toggleUseLivePrices(enabled) {
+        set(state => ({ useLivePrices: enabled !== undefined ? enabled : !state.useLivePrices }));
+      },
+
+      async fetchMarketPrices(forceRefresh = false) {
+        set({ isSyncingMarket: true, marketError: null });
+        try {
+          const res = await fetch(`/api/market-prices${forceRefresh ? '?refresh=true' : ''}`);
+          if (!res.ok) throw new Error('Gagal mengambil data harga pasar');
+          const data: MarketPricesResponse = await res.json();
+          set({
+            marketPrices: data.prices || {},
+            marketSource: data.source || 'Badan Pangan Nasional (Bapanas)',
+            marketScrapedVia: data.scrapedVia || 'firecrawl_live',
+            marketLastSync: data.timestamp || new Date().toISOString(),
+            isSyncingMarket: false,
+          });
+        } catch (err) {
+          set({
+            isSyncingMarket: false,
+            marketError: err instanceof Error ? err.message : 'Error syncing market data',
+          });
+        }
       },
     }),
     {

@@ -6,7 +6,7 @@
 
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useGardenStore } from '@/store/gardenStore';
 import { FACILITY_CATALOG } from '@/data/facility-catalog';
 import { VEGETABLE_CATALOG } from '@/data/vegetable-catalog';
@@ -28,6 +28,10 @@ import {
   Scan,
   Radio,
   Sparkles,
+  RefreshCw,
+  Flame,
+  ArrowUpRight,
+  ArrowDownRight,
 } from 'lucide-react';
 
 interface RightPanelProps {
@@ -45,6 +49,30 @@ export function RightPanel({ onOpenVision }: RightPanelProps) {
   const removeObject = useGardenStore(state => state.removeObject);
   const selectObject = useGardenStore(state => state.selectObject);
 
+  const marketPrices = useGardenStore(state => state.marketPrices);
+  const useLivePrices = useGardenStore(state => state.useLivePrices);
+  const isSyncingMarket = useGardenStore(state => state.isSyncingMarket);
+  const marketSource = useGardenStore(state => state.marketSource);
+  const marketLastSync = useGardenStore(state => state.marketLastSync);
+  const marketScrapedVia = useGardenStore(state => state.marketScrapedVia);
+  const fetchMarketPrices = useGardenStore(state => state.fetchMarketPrices);
+  const toggleUseLivePrices = useGardenStore(state => state.toggleUseLivePrices);
+
+  useEffect(() => {
+    if (Object.keys(marketPrices).length === 0) {
+      fetchMarketPrices();
+    }
+  }, [marketPrices, fetchMarketPrices]);
+
+  const livePriceMap = useMemo(() => {
+    if (!useLivePrices) return undefined;
+    const map: Record<string, number> = {};
+    for (const [k, v] of Object.entries(marketPrices)) {
+      map[k] = v.currentPriceIdr;
+    }
+    return map;
+  }, [useLivePrices, marketPrices]);
+
   const selectedObj = garden.objects.find(o => o.id === selectedObjectId);
   const objType = selectedObj ? (selectedObj.type || selectedObj.facilityType || 'raised_bed') : null;
   const facility = objType ? FACILITY_CATALOG.find(f => f.type === objType) : null;
@@ -52,7 +80,7 @@ export function RightPanel({ onOpenVision }: RightPanelProps) {
   const posY = selectedObj ? (selectedObj.position.y ?? selectedObj.position.z ?? 0) : 0;
 
   // Real-time calculation of crop yield & production metrics
-  const metrics = useMemo(() => calculateGardenMetrics(garden.objects), [garden.objects]);
+  const metrics = useMemo(() => calculateGardenMetrics(garden.objects, livePriceMap), [garden.objects, livePriceMap]);
 
   const conflicts = garden.validation.conflicts;
   const isValid = garden.validation.status === 'valid' || garden.validation.isValid;
@@ -650,6 +678,56 @@ export function RightPanel({ onOpenVision }: RightPanelProps) {
         {/* ── TAB 3: HARVEST & FINANCIAL ESTIMATES ── */}
         {activeTab === 'metrics' && (
           <div className="space-y-4">
+            {/* Live Market Price Intelligence (Firecrawl) */}
+            <div className="p-3 rounded-lg bg-gradient-to-br from-amber-500/10 via-emerald-500/5 to-black/40 border border-amber-500/30 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <Flame size={14} className="text-amber-400" />
+                  <span className="text-xs font-semibold text-white">Live Market Intelligence</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-mono font-medium ${
+                    marketScrapedVia === 'firecrawl_live'
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                      : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                  }`}>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    {marketScrapedVia === 'firecrawl_live' ? 'Firecrawl Live' : 'Bapanas Index'}
+                  </span>
+                  <button
+                    onClick={() => fetchMarketPrices(true)}
+                    disabled={isSyncingMarket}
+                    className="p-1 rounded bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white transition-colors disabled:opacity-50"
+                    title="Sinkronisasi harga pasar dengan Firecrawl"
+                  >
+                    <RefreshCw size={12} className={isSyncingMarket ? 'animate-spin text-amber-400' : ''} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-[11px] pt-1 border-t border-white/5">
+                <span className="text-gray-400">Mode Harga Dinamis</span>
+                <button
+                  type="button"
+                  onClick={() => toggleUseLivePrices()}
+                  className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold transition-all ${
+                    useLivePrices
+                      ? 'bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/20'
+                      : 'bg-white/10 text-gray-400'
+                  }`}
+                >
+                  {useLivePrices ? 'AKTIF (LIVE)' : 'STANDAR KATALOG'}
+                </button>
+              </div>
+
+              <div className="text-[9px] text-gray-400/90 font-mono flex items-center justify-between">
+                <span className="truncate max-w-[180px]">{marketSource}</span>
+                {marketLastSync && (
+                  <span>{new Date(marketLastSync).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
+                )}
+              </div>
+            </div>
+
             {/* Highlights Grid */}
             <div className="grid grid-cols-2 gap-2">
               <div className="p-3 rounded-lg bg-white/5 border border-white/5">
@@ -668,7 +746,14 @@ export function RightPanel({ onOpenVision }: RightPanelProps) {
                     <Coins size={13} />
                     <span>Nilai Panen Bruto</span>
                   </div>
-                  <span className="text-[9px] font-mono text-gray-500">Gross</span>
+                  {useLivePrices && metrics.revenueDeltaPct !== 0 && (
+                    <span className={`text-[9px] font-mono px-1 py-0.5 rounded font-bold flex items-center ${
+                      metrics.revenueDeltaPct > 0 ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'
+                    }`}>
+                      {metrics.revenueDeltaPct > 0 ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}
+                      {metrics.revenueDeltaPct > 0 ? `+${metrics.revenueDeltaPct}%` : `${metrics.revenueDeltaPct}%`}
+                    </span>
+                  )}
                 </div>
                 <div className="text-base font-bold font-mono text-white">
                   Rp {(metrics.totalEstimatedMonthlyRevenueIdr / 1000).toLocaleString('id-ID')}k
@@ -737,21 +822,41 @@ export function RightPanel({ onOpenVision }: RightPanelProps) {
 
             {/* Breakdown per crop */}
             <div className="space-y-2 pt-2 border-t border-white/10">
-              <div className="text-[11px] font-mono uppercase text-gray-400">Rincian per Varietas</div>
+              <div className="text-[11px] font-mono uppercase text-gray-400 flex items-center justify-between">
+                <span>Rincian per Varietas</span>
+                {useLivePrices && (
+                  <span className="text-[9px] text-amber-400 font-mono font-medium">Harga Pasar Terkini</span>
+                )}
+              </div>
               {metrics.breakdown.length === 0 ? (
                 <div className="text-xs text-gray-500 text-center py-4">
                   Belum ada bedengan atau instalasi hidroponik di kebun.
                 </div>
               ) : (
                 metrics.breakdown.map(item => (
-                  <div key={item.cropId} className="p-2.5 rounded-lg bg-white/5 border border-white/5 space-y-1">
+                  <div key={item.cropId} className="p-2.5 rounded-lg bg-white/5 border border-white/5 space-y-1.5">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-semibold text-white">{item.cropName}</span>
-                      <span className="text-[10px] text-emerald-400 font-mono">
-                        {item.totalAreaM2} m² ({item.plantCount} tanaman)
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[11px] font-mono font-bold text-amber-300">
+                          Rp {item.pricePerKg.toLocaleString('id-ID')}/kg
+                        </span>
+                        {useLivePrices && item.deltaPct !== 0 && (
+                          <span className={`text-[9px] font-mono px-1 py-0.2 rounded font-semibold ${
+                            item.deltaPct > 0 ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'
+                          }`}>
+                            {item.deltaPct > 0 ? `+${item.deltaPct}%` : `${item.deltaPct}%`}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center justify-between text-[11px] text-gray-400">
+                      <span>{item.totalAreaM2} m² ({item.plantCount} tanaman)</span>
+                      <span className="font-mono text-emerald-400 font-medium">
+                        ~Rp {(item.estimatedValueIdr / 1000).toLocaleString('id-ID')}k/bln
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] text-gray-500 pt-0.5 border-t border-white/5 font-mono">
                       <span>Panen: ~{item.monthlyYieldKg} kg/bln</span>
                       <span>Air: {item.waterDemandLitersPerDay} L/hari</span>
                     </div>
