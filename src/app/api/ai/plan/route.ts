@@ -137,23 +137,41 @@ KEMBALIKAN HANYA JSON MURNI:
 `;
     }
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-    });
+    const CANDIDATE_MODELS = ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.5-flash', 'gemini-flash-latest'];
+    let parsed: any = null;
+    let lastError: any = null;
 
-    const text = response.text || '';
-    const cleanJson = text.replace(/```json/gi, '').replace(/```/g, '').trim();
-    let parsed: any;
-    try {
-      parsed = JSON.parse(cleanJson);
-    } catch {
-      const match = cleanJson.match(/\{[\s\S]*\}/);
-      if (match) {
-        parsed = JSON.parse(match[0]);
-      } else {
-        throw new Error('Respons AI tidak dapat diurai ke dalam format JSON');
+    for (const modelName of CANDIDATE_MODELS) {
+      try {
+        const response = await ai.models.generateContent({
+          model: modelName,
+          contents: prompt,
+        });
+
+        const text = response.text || '';
+        const cleanJson = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+
+        try {
+          parsed = JSON.parse(cleanJson);
+        } catch {
+          const match = cleanJson.match(/\{[\s\S]*\}/);
+          if (match) {
+            parsed = JSON.parse(match[0]);
+          }
+        }
+
+        if (parsed) {
+          break;
+        }
+      } catch (err) {
+        lastError = err;
+        console.warn(`Planner model ${modelName} failed:`, err);
+        await new Promise((resolve) => setTimeout(resolve, 600));
       }
+    }
+
+    if (!parsed) {
+      throw lastError || new Error('Gagal menghasilkan tata letak dari model AI.');
     }
 
     return NextResponse.json(parsed);

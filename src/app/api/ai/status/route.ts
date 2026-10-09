@@ -12,11 +12,11 @@ export async function GET() {
 
   return NextResponse.json({
     configured: isConfigured,
-    model: 'gemini-2.5-flash',
+    model: 'gemini-3.8-flash',
     mode: isConfigured ? 'cloud_gemini' : 'deterministic_rules',
-    providerName: isConfigured ? 'Google Gemini 2.5 Flash (Cloud)' : 'Rule-Based Spatial Engine (Offline)',
+    providerName: isConfigured ? 'Google Gemini 3.8 Flash (Cloud)' : 'Rule-Based Spatial Engine (Offline)',
     message: isConfigured
-      ? 'Koneksi AI aktif dan terhubung ke Google Gemini 2.5 Flash'
+      ? 'Koneksi AI aktif dan terhubung ke Google Gemini 3.8 Flash'
       : 'Berjalan dalam mode mesin spasial deterministik lokal (Rule-Based)',
   });
 }
