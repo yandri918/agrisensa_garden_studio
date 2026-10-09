@@ -204,16 +204,17 @@ ${conversationHistory.slice(-4).map(h => `${h.role}: ${h.content}`).join('\n')}
 PERTANYAAN PENGGUNA TERBARU:
 "${query}"
 
-INSTRUKSI:
-1. Berikan jawaban yang komprehensif, terstruktur dengan sub-judul atau poin-poin yang mudah dibaca pekebun.
-2. Jelaskan penyebab, pencegahan alami, dan tindakan kuratif (prioritaskan solusi ramah lingkungan/organik).
-3. Berikan rekomendasi yang spesifik untuk jenis tanaman atau cuaca yang ada di kebun pengguna.
-4. Jika relevan, sertakan 1-2 aksi kebun konkrit (suggestedActions) seperti menambahkan tanaman pendamping (marigold/kemangi) atau penyesuaian irigasi.
-5. Cantumkan 2 pertanyaan lanjutan yang mungkin ingin ditanyakan pekebun.
+INSTRUKSI FORMATTING KELUARAN (SANGAT PENTING):
+1. Mulai dengan 1-2 kalimat ringkasan eksekutif yang ramah dan langsung menjawab inti pertanyaan.
+2. Bagi solusi ke dalam 3-4 langkah terstruktur dengan judul bagian: "### 1. [Judul Langkah]", "### 2. [Judul Langkah]", dst.
+3. Di dalam setiap langkah, gunakan poin-poin terpisah dengan format: "- **[Nama Tindakan]:** [Penjelasan ringkas, takaran spesifik, dosis, atau cara kerja]".
+4. Sebutkan angka takaran praktis (cth: PPM nutrisi, dosis ml/liter air, jarak cm, jumlah perangkap) yang langsung bisa dipraktikkan.
+5. Hindari teks paragraf tebal yang monoton. Buat tulisan rapi, berjarak, dan mudah dipahami dalam sekali lihat.
+6. Cantumkan 1-2 aksi kebun konkrit (suggestedActions) dan 2 pertanyaan lanjutan yang relevan.
 
 KEMBALIKAN HANYA JSON MURNI TANPA CODEBLOCK:
 {
-  "replyMarkdown": "Teks jawaban lengkap dalam format Markdown bahasa Indonesia...",
+  "replyMarkdown": "Teks jawaban lengkap terstruktur sesuai panduan di atas...",
   "keyTakeaways": ["Poin ringkas 1", "Poin ringkas 2"],
   "suggestedActions": [
     {
