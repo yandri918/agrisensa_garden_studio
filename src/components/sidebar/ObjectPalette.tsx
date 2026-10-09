@@ -35,10 +35,23 @@ export function ObjectPalette() {
   const setGardenName = useGardenStore(state => state.setGardenName);
   const setPreferences = useGardenStore(state => state.setPreferences);
 
+  const selectedObjectId = useGardenStore(state => state.selectedObjectId);
+  const selectObject = useGardenStore(state => state.selectObject);
+
   const plotW = garden.plot.widthM;
   const plotD = garden.plot.depthM;
   const entrance = garden.plot.entrance;
   const entranceY = entrance.y ?? entrance.z ?? 0;
+
+  const selectedObj = garden.objects.find(o => o.id === selectedObjectId);
+  const isSelectedBedOrHydro = Boolean(
+    selectedObj && (
+      selectedObj.type === 'raised_bed' ||
+      selectedObj.type === 'hydroponic' ||
+      selectedObj.facilityType === 'raised_bed' ||
+      selectedObj.facilityType === 'hydroponic'
+    )
+  );
 
   // Add facility to garden
   const handleAddFacility = (facility: FacilityEntry) => {
@@ -198,34 +211,109 @@ export function ObjectPalette() {
         {/* ── TAB 2: Crops ── */}
         {tab === 'crops' && (
           <div className="space-y-3">
-            <div className="text-[11px] font-mono uppercase text-gray-400 tracking-wider">
-              Database Tanaman AgriSensa
+            <div className="flex items-center justify-between text-[11px] font-mono uppercase text-gray-400 tracking-wider">
+              <span>Database Tanaman AgriSensa</span>
+              <span className="text-[10px] text-emerald-400 font-semibold">{VEGETABLE_CATALOG.length} Varietas</span>
             </div>
-            <div className="space-y-2">
-              {VEGETABLE_CATALOG.map(crop => (
-                <div
-                  key={crop.id}
-                  className="p-3 rounded-lg bg-white/5 border border-white/5 space-y-1.5"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-white">
-                      {crop.nameId}
-                    </span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-mono">
-                      {crop.harvestDays} hari panen
-                    </span>
-                  </div>
-                  <div className="text-[11px] text-gray-400 italic">
-                    {crop.scientificName}
-                  </div>
-                  <div className="grid grid-cols-2 gap-1 text-[10px] text-gray-300 pt-1 border-t border-white/5">
-                    <div>Hasil Tanah: {crop.yieldSoilKgM2} kg/m²</div>
-                    <div>Nilai Pasar: <span className="uppercase text-emerald-400">{crop.marketValue}</span></div>
-                    <div>Jarak Tanam: {crop.spacingCm} cm</div>
-                    <div>Sinar: {crop.lightNeeds}</div>
-                  </div>
+
+            {isSelectedBedOrHydro && selectedObj && (
+              <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/25 space-y-1">
+                <div className="flex items-center gap-1.5 text-xs text-emerald-300 font-medium">
+                  <Sprout size={13} className="text-emerald-400" />
+                  <span>Objek Aktif: <strong className="text-white">{selectedObj.label || 'Bedengan'}</strong></span>
                 </div>
-              ))}
+                <p className="text-[10px] text-gray-300">
+                  Klik tombol <em>"Tanam di Objek Ini"</em> pada varietas di bawah untuk langsung mengganti tanaman.
+                </p>
+              </div>
+            )}
+
+            <div className="space-y-2.5">
+              {VEGETABLE_CATALOG.map(crop => {
+                const isPlantedInSelected = isSelectedBedOrHydro && selectedObj?.plantSpeciesId === crop.id;
+
+                return (
+                  <div
+                    key={crop.id}
+                    className={`p-3 rounded-lg border transition-all space-y-2 ${
+                      isPlantedInSelected
+                        ? 'bg-emerald-950/20 border-emerald-500/50 shadow-sm shadow-emerald-500/10'
+                        : 'bg-white/5 border-white/5 hover:border-white/15'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-white">
+                        {crop.nameId}
+                      </span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-mono">
+                        {crop.harvestDays} hari panen
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-gray-400 italic">
+                      {crop.scientificName}
+                    </div>
+                    <div className="grid grid-cols-2 gap-1 text-[10px] text-gray-300 pt-1 border-t border-white/5">
+                      <div>Hasil Tanah: {crop.yieldSoilKgM2} kg/m²</div>
+                      <div>Nilai Pasar: <span className="uppercase text-emerald-400">{crop.marketValue}</span></div>
+                      <div>Jarak Tanam: {crop.spacingCm} cm</div>
+                      <div>Sinar: {crop.lightNeeds}</div>
+                    </div>
+
+                    {/* Interactive Planting Actions */}
+                    <div className="pt-2 border-t border-white/5 space-y-1.5">
+                      {isSelectedBedOrHydro && selectedObj && (
+                        <button
+                          type="button"
+                          onClick={() => updateObject(selectedObj.id, { plantSpeciesId: crop.id })}
+                          className={`w-full py-1.5 px-2 rounded text-[11px] font-medium flex items-center justify-center gap-1.5 transition-all ${
+                            isPlantedInSelected
+                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 cursor-default'
+                              : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm'
+                          }`}
+                        >
+                          <Sprout size={12} />
+                          <span>
+                            {isPlantedInSelected
+                              ? '✓ Sedang Ditanam di Objek Ini'
+                              : `Tanam di ${selectedObj.label?.split('#')[0]?.trim() || 'Objek Ini'}`}
+                          </span>
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const facility = FACILITY_CATALOG.find(f => f.type === 'raised_bed') || FACILITY_CATALOG[0];
+                          const currentCount = garden.objects.length;
+                          const spawnX = Math.min(plotW - facility.defaultSize.widthM, 1.0 + (currentCount % 4) * 1.5);
+                          const spawnY = Math.min(plotD - facility.defaultSize.depthM, 1.0 + Math.floor(currentCount / 4) * 2.5);
+
+                          const newBedId = `obj_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`;
+                          addObject({
+                            id: newBedId,
+                            label: `Bedengan ${crop.nameId} #${currentCount + 1}`,
+                            type: 'raised_bed',
+                            facilityType: 'raised_bed',
+                            position: { x: Math.max(0.2, spawnX), y: Math.max(0.2, spawnY), z: Math.max(0.2, spawnY) },
+                            size: { ...facility.defaultSize },
+                            rotationDeg: 0,
+                            locked: false,
+                            isLocked: false,
+                            required: false,
+                            cropAssignments: [],
+                            plantSpeciesId: crop.id,
+                          });
+                          selectObject(newBedId);
+                        }}
+                        className="w-full py-1 px-2 rounded bg-white/5 hover:bg-white/10 text-[10px] text-gray-300 transition-colors flex items-center justify-center gap-1"
+                      >
+                        <Plus size={11} className="text-emerald-400" />
+                        <span>+ Tambah Bedengan ({crop.nameId})</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
