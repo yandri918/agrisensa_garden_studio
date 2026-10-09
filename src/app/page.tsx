@@ -16,7 +16,9 @@ import { AIAssistantModal } from '@/components/ai/AIAssistantModal';
 import { ExportModal } from '@/components/export/ExportModal';
 import { PlantScannerModal } from '@/components/vision/PlantScannerModal';
 import { SeedImporterModal } from '@/components/seed/SeedImporterModal';
+import { AgroCopilotDrawer } from '@/components/ai/AgroCopilotDrawer';
 import { useGardenStore } from '@/store/gardenStore';
+import { Bot } from 'lucide-react';
 
 // Client-only dynamic import for 3D Three.js scene
 const Garden3DScene = dynamic(
@@ -36,6 +38,7 @@ export default function Home() {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isVisionModalOpen, setIsVisionModalOpen] = useState(false);
   const [isSeedModalOpen, setIsSeedModalOpen] = useState(false);
+  const [isCopilotOpen, setIsCopilotOpen] = useState(false);
 
   // Keyboard shortcuts (Undo, Redo, Delete, Deselect)
   useEffect(() => {
@@ -76,6 +79,7 @@ export default function Home() {
         onOpenExport={() => setIsExportModalOpen(true)}
         onOpenVision={() => setIsVisionModalOpen(true)}
         onOpenSeedImporter={() => setIsSeedModalOpen(true)}
+        onOpenCopilot={() => setIsCopilotOpen(true)}
       />
 
       {/* 2. Main Workspace (Left Palette + Center Canvas/3D + Right Inspector) */}
@@ -86,13 +90,29 @@ export default function Home() {
         {/* Center: Viewport (2D Blueprint or 3D Scene) */}
         <main className="flex-1 h-full relative overflow-hidden bg-slate-950">
           {viewMode === '2d' ? <GardenCanvas /> : <Garden3DScene />}
+
+          {/* Floating Agro Co-Pilot Launcher */}
+          <button
+            onClick={() => setIsCopilotOpen(true)}
+            className="absolute bottom-5 right-5 z-20 flex items-center gap-2.5 px-3.5 py-2 rounded-full bg-slate-900/90 hover:bg-slate-800 text-emerald-300 border border-emerald-500/40 shadow-xl backdrop-blur-md text-xs font-semibold hover:border-emerald-400 transition-all group"
+            title="Tanya Agro-Knowledge Co-Pilot (Firecrawl RAG + Gemini AI)"
+          >
+            <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+              <Bot size={13} className="group-hover:rotate-12 transition-transform" />
+            </div>
+            <span>Agro Co-Pilot</span>
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          </button>
         </main>
 
         {/* Right: Properties Inspector, Spatial Validation Audit, Crop Metrics */}
-        <RightPanel onOpenVision={() => setIsVisionModalOpen(true)} />
+        <RightPanel
+          onOpenVision={() => setIsVisionModalOpen(true)}
+          onOpenCopilot={() => setIsCopilotOpen(true)}
+        />
       </div>
 
-      {/* 3. Modals */}
+      {/* 3. Modals & Drawers */}
       <AIAssistantModal
         isOpen={isAIModalOpen}
         onClose={() => setIsAIModalOpen(false)}
@@ -112,6 +132,11 @@ export default function Home() {
       <SeedImporterModal
         isOpen={isSeedModalOpen}
         onClose={() => setIsSeedModalOpen(false)}
+      />
+
+      <AgroCopilotDrawer
+        isOpen={isCopilotOpen}
+        onClose={() => setIsCopilotOpen(false)}
       />
     </div>
   );

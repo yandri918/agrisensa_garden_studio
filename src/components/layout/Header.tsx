@@ -20,6 +20,7 @@ import {
   RotateCcw,
   Scan,
   Sprout,
+  Bot,
 } from 'lucide-react';
 import { WeatherWidget } from '@/components/weather/WeatherWidget';
 
@@ -28,9 +29,16 @@ interface HeaderProps {
   onOpenExport: () => void;
   onOpenVision?: () => void;
   onOpenSeedImporter?: () => void;
+  onOpenCopilot?: () => void;
 }
 
-export function Header({ onOpenAI, onOpenExport, onOpenVision, onOpenSeedImporter }: HeaderProps) {
+export function Header({
+  onOpenAI,
+  onOpenExport,
+  onOpenVision,
+  onOpenSeedImporter,
+  onOpenCopilot,
+}: HeaderProps) {
   const garden = useGardenStore(state => state.garden);
   const viewMode = useGardenStore(state => state.viewMode);
   const setViewMode = useGardenStore(state => state.setViewMode);
@@ -183,6 +191,21 @@ export function Header({ onOpenAI, onOpenExport, onOpenVision, onOpenSeedImporte
           >
             <Sprout size={14} className="text-amber-400" />
             <span>Impor Benih</span>
+          </button>
+        )}
+
+        {/* Agro-Knowledge RAG Co-Pilot Drawer Trigger */}
+        {onOpenCopilot && (
+          <button
+            onClick={onOpenCopilot}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 transition-all shadow-sm group"
+            title="Agro-Knowledge RAG Co-Pilot: Konsultasi Pertanian Berbasis Firecrawl & Gemini AI"
+          >
+            <Bot size={14} className="text-emerald-400 group-hover:scale-110 transition-transform" />
+            <span>Agro Co-Pilot</span>
+            <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-emerald-500/30 text-emerald-200">
+              RAG
+            </span>
           </button>
         )}
 

@@ -32,13 +32,15 @@ import {
   Flame,
   ArrowUpRight,
   ArrowDownRight,
+  Bot,
 } from 'lucide-react';
 
 interface RightPanelProps {
   onOpenVision?: () => void;
+  onOpenCopilot?: () => void;
 }
 
-export function RightPanel({ onOpenVision }: RightPanelProps) {
+export function RightPanel({ onOpenVision, onOpenCopilot }: RightPanelProps) {
   const [activeTab, setActiveTab] = useState<'inspect' | 'audit' | 'metrics'>('inspect');
 
   const garden = useGardenStore(state => state.garden);
@@ -354,15 +356,29 @@ export function RightPanel({ onOpenVision }: RightPanelProps) {
                         </div>
                       )}
 
-                      <button
-                        type="button"
-                        onClick={onOpenVision}
-                        className="w-full py-1.5 px-2 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-xs font-semibold text-emerald-300 flex items-center justify-center gap-1.5 transition-colors"
-                        title="Pindai daun bedengan ini menggunakan Computer Vision Roboflow"
-                      >
-                        <Scan size={13} className="text-emerald-400" />
-                        <span>Inspeksi Daun (Roboflow Vision)</span>
-                      </button>
+                      {onOpenVision && (
+                        <button
+                          type="button"
+                          onClick={onOpenVision}
+                          className="w-full py-1.5 px-2 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-xs font-semibold text-emerald-300 flex items-center justify-center gap-1.5 transition-colors"
+                          title="Pindai daun bedengan ini menggunakan Computer Vision Roboflow"
+                        >
+                          <Scan size={13} className="text-emerald-400" />
+                          <span>Inspeksi Daun (Roboflow Vision)</span>
+                        </button>
+                      )}
+
+                      {onOpenCopilot && (
+                        <button
+                          type="button"
+                          onClick={onOpenCopilot}
+                          className="w-full py-1.5 px-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-gray-200 flex items-center justify-center gap-1.5 transition-colors"
+                          title="Konsultasi perawatan tanaman ini dengan Agro Co-Pilot RAG"
+                        >
+                          <Bot size={13} className="text-emerald-400" />
+                          <span>Konsultasi Agro Co-Pilot</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}
